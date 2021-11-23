@@ -6,6 +6,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Mail;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -33,9 +34,40 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 				return -1;
 			}
 
+			var cfApiKey = Environment.GetEnvironmentVariable("CFAPI_Key");
+			_ = long.TryParse(Environment.GetEnvironmentVariable("CFAPI_PartnerId"), out long cfPartnerId);
+			var cfContactEmail = Environment.GetEnvironmentVariable("CFAPI_ContactEmail");
+
+			List<string> errors = new();
+
+			if (string.IsNullOrWhiteSpace(cfApiKey))
+			{
+				errors.Add("Error: Missing CurseForge API key in environment variable CFAPI_Key");
+			}
+
+			if (cfPartnerId == 0)
+			{
+				errors.Add("Error: Missing CurseForge Partner Id in environment variable CFAPI_PartnerId");
+			}
+
+			if (string.IsNullOrWhiteSpace(cfContactEmail) || !MailAddress.TryCreate(cfContactEmail, out _))
+			{
+				errors.Add("Error: Missing contact email for the API key in environment variable CFAPI_ContactEmail");
+			}
+
+			if (errors.Count > 0)
+			{
+				errors.ForEach(Console.WriteLine);
+			}
+
+			if (!CheckRequiredDependencies())
+			{
+				return -1;
+			}
+
 			if (!int.TryParse(args[0], out int modId))
 			{
-				Console.WriteLine("First parameter is not a project id, use only numbers");
+				Console.WriteLine("Error: First parameter is not a project id, use only numbers");
 				return -1;
 			}
 
@@ -43,7 +75,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 
 			if (!int.TryParse(args[1], out int fileId))
 			{
-				Console.WriteLine("Second parameter is not a file id, use only numbers");
+				Console.WriteLine("Error: Second parameter is not a file id, use only numbers");
 				return -1;
 			}
 
@@ -69,11 +101,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 				Console.WriteLine($"Created installation directory: \"{path}\"");
 			}
 
-			var cpApiKey = Environment.GetEnvironmentVariable("CFAPI_Key");
-			_ = long.TryParse(Environment.GetEnvironmentVariable("CFAPI_PartnerId"), out long cfPartnerId);
-			var cpContactEmail = Environment.GetEnvironmentVariable("CFAPI_ContactEmail");
-
-			using (var cfApiClient = new APIClient.ApiClient(cpApiKey, cfPartnerId, cpContactEmail))
+			using (var cfApiClient = new APIClient.ApiClient(cfApiKey, cfPartnerId, cfContactEmail))
 			{
 				var modLoader = MinecraftModloader.Unknown;
 				var modInfo = await cfApiClient.GetModAsync(modId);
@@ -83,7 +111,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 				if (!modInfo.Data.Categories.Any(c => c.ClassId == 4471))
 				{
 					// Not a modpack
-					Console.WriteLine($"Project is not a modpack, not allowed in current version of server launcher");
+					Console.WriteLine($"Error: Project is not a modpack, not allowed in current version of server launcher");
 					return -1;
 				}
 
@@ -115,14 +143,11 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 
 					if (mcVersion == null)
 					{
-						Console.WriteLine($"Could not find version {manifest.Minecraft.Version}, exiting");
+						Console.WriteLine($"Error: Could not find version {manifest.Minecraft.Version}, exiting");
 						return -1;
 					}
 
-					//mcVersion.Dump("Manifest version");
 					var mcVersionInfo = JsonSerializer.Deserialize<MinecraftVersionInfo>(await hc.GetStringAsync(mcVersion.Url));
-
-					//mcVersionInfo.Dump();
 					await DownloadJREAsync(hc, installPath, mcVersionInfo.JavaVersion);
 
 					string modloaderVersion = string.Empty;
@@ -155,7 +180,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 
 					if (modLoader == MinecraftModloader.Unknown)
 					{
-						Console.WriteLine("Could not determine modloader, bailing out");
+						Console.WriteLine("Error: Could not determine modloader, bailing out");
 						return -1;
 					}
 
@@ -217,13 +242,40 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 							await InstallForgeAsync(installPath);
 							break;
 						case MinecraftModloader.Unknown:
-							Console.WriteLine("Could not determine modloader, bailing out");
+							Console.WriteLine("Error: Could not determine modloader, bailing out");
 							return -1;
 					}
 				}
 			}
 
 			return 0;
+		}
+
+		private static bool CheckRequiredDependencies()
+		{
+			var javaExists = ExecutableExistsOnPath(OperatingSystem.IsWindows() ? "java.exe" : "java");
+
+			if (!javaExists)
+			{
+				Console.WriteLine($"Error: {(OperatingSystem.IsWindows() ? "java.exe" : "java")} missing in PATH. Please install Java");
+			}
+
+			return javaExists;
+		}
+
+		private static bool ExecutableExistsOnPath(string processName)
+		{
+			var separatedPaths = Environment.GetEnvironmentVariable("PATH").Split(Path.PathSeparator);
+			foreach (var path in separatedPaths)
+			{
+				var dir = Path.Combine(path, processName);
+				if (File.Exists(dir))
+				{
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		private static async Task<ModLoaderInfo<T>> GetLoaderDependencies<T>(HttpClient _client, string minecraftVersion, string loaderVersion) where T : ModLoaderVersionInfo
