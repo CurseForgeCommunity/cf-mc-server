@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.CommandLine;
+using System.CommandLine.Builder;
 using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -24,9 +26,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 
 		private static async Task<int> Main(params string[] args)
 		{
-			var command = SetupCommand();
-
-			return await command.InvokeAsync(args);
+			return await SetupCommand().InvokeAsync(args);
 		}
 
 		private static RootCommand SetupCommand()
@@ -42,15 +42,16 @@ Example:
 			SetupArguments(command);
 			SetupOptions(command);
 
-			command.Handler = CommandHandler.Create<long, long, string, string>(async (projectId, fileId, serverPath, javaArgs) => {
-				await InstallServer(projectId.ToString(), fileId.ToString(), serverPath, javaArgs);
+			command.Handler = CommandHandler.Create<int, int, string, string, bool>(async (projectid, fileid, serverPath, javaArgs, startServer) => {
+				return await InstallServer(projectid, fileid, serverPath, javaArgs, startServer);
 			});
+
 			return command;
 		}
 
 		private static void SetupOptions(RootCommand command)
 		{
-			command.AddOption(
+			command.AddGlobalOption(
 				new(
 					aliases: new[] {
 						"--projectid",
@@ -61,7 +62,7 @@ Example:
 				)
 			);
 
-			command.AddOption(
+			command.AddGlobalOption(
 				new(
 					aliases: new[] {
 						"--fileid",
@@ -72,7 +73,7 @@ Example:
 				)
 			);
 
-			command.AddOption(
+			command.AddGlobalOption(
 				new(
 					aliases: new[] {
 						"--server-path",
@@ -83,7 +84,7 @@ Example:
 				)
 			);
 
-			command.AddOption(
+			command.AddGlobalOption(
 				new(
 					aliases: new[] {
 						"--java-args",
@@ -93,28 +94,42 @@ Example:
 					argumentType: typeof(string)
 				)
 			);
+
+			command.AddGlobalOption(
+				new(
+					aliases: new[]
+					{
+						"--start-server",
+						"-start"
+					},
+					description: "Makes the server start when it's done installing the server and modpack",
+					argumentType: typeof(bool)
+				)
+			);
 		}
 
 		private static void SetupArguments(RootCommand command)
 		{
 			command.AddArgument(new("projectid")
 			{
-				ArgumentType = typeof(long),
+				ArgumentType = typeof(int),
 				Arity = ArgumentArity.ZeroOrOne,
-				Description = "Sets the project id / modpack id to use"
+				Description = "Sets the project id / modpack id to use",
+
 			});
+
 			command.AddArgument(new("fileid")
 			{
-				ArgumentType = typeof(long),
-				//Arity = ArgumentArity.ZeroOrOne,
+				ArgumentType = typeof(int),
 				Description = "Sets the file id to use"
 			});
+
 			command.AddArgument(new("server-path")
 			{
 				ArgumentType = typeof(string),
-				//Arity = ArgumentArity.ZeroOrOne,
 				Description = "Sets the server path, where to install the modpack server"
 			});
+
 			command.AddArgument(new("java-arguments")
 			{
 				ArgumentType = typeof(string),
@@ -123,10 +138,10 @@ Example:
 			});
 		}
 
-		private static async Task<int> InstallServer(params string[] args)
+		private static async Task<int> InstallServer(int modId, int fileId, string path, string javaArgs, bool startServer)
 		{
 			var cfApiKey = Environment.GetEnvironmentVariable("CFAPI_Key");
-			_ = long.TryParse(Environment.GetEnvironmentVariable("CFAPI_PartnerId"), out long cfPartnerId);
+			_ = long.TryParse(Environment.GetEnvironmentVariable("CFAPI_PartnerId"), out var cfPartnerId);
 			var cfContactEmail = Environment.GetEnvironmentVariable("CFAPI_ContactEmail");
 
 			List<string> errors = new();
@@ -156,23 +171,8 @@ Example:
 				return -1;
 			}
 
-			if (!int.TryParse(args[0], out var modId))
-			{
-				Console.WriteLine("Error: First parameter is not a project id, use only numbers");
-				return -1;
-			}
-
 			Console.WriteLine($"Using project: {modId}");
-
-			if (!int.TryParse(args[1], out var fileId))
-			{
-				Console.WriteLine("Error: Second parameter is not a file id, use only numbers");
-				return -1;
-			}
-
 			Console.WriteLine($"Using file: {fileId}");
-
-			string path = args[2];
 
 			if (string.IsNullOrWhiteSpace(path))
 			{
@@ -191,6 +191,8 @@ Example:
 
 				Console.WriteLine($"Created installation directory: \"{path}\"");
 			}
+
+			Console.WriteLine($"Using path: {path}");
 
 			using (APIClient.ApiClient cfApiClient = new(cfApiKey, cfPartnerId, cfContactEmail))
 			{
@@ -334,10 +336,10 @@ Example:
 				switch (modLoader)
 				{
 					case MinecraftModloader.Fabric:
-						await InstallFabricAsync(installPath, minecraftVersion, modloaderVersion);
+						await InstallFabricAsync(installPath, minecraftVersion, modloaderVersion, javaArgs, startServer);
 						break;
 					case MinecraftModloader.Forge:
-						await InstallForgeAsync(installPath);
+						await InstallForgeAsync(installPath, javaArgs, startServer);
 						break;
 					case MinecraftModloader.Unknown:
 						Console.WriteLine("Error: Could not determine modloader, bailing out");
@@ -493,7 +495,7 @@ Example:
 
 		private static string GetJavaExecutable() => OperatingSystem.IsWindows() ? "java.exe" : "java";
 
-		private static async Task InstallFabricAsync(string installPath, string minecraftVersion, string loaderVersion)
+		private static async Task InstallFabricAsync(string installPath, string minecraftVersion, string loaderVersion, string javaArgs, bool startServer)
 		{
 			var fabricInstaller = Directory.EnumerateFiles(installPath).FirstOrDefault(f => f.Contains("fabric-installer-"));
 			if (fabricInstaller == null)
@@ -509,10 +511,15 @@ Example:
 				"-downloadMinecraft"
 			};
 
-			await RunProcessAsync(installPath, GetJavaExecutable(), arguments);
+			await RunProcessAsync(installPath, GetJavaExecutable(), false, arguments);
+
+			if (startServer)
+			{
+				await RunProcessAsync(installPath, Path.Combine(installPath, "runtime", "bin", GetJavaExecutable()), true, javaArgs, "-Dsun.stdout.encoding=UTF-8", $"-jar fabric-server-launch.jar nogui");
+			}
 		}
 
-		private static async Task InstallForgeAsync(string installPath)
+		private static async Task InstallForgeAsync(string installPath, string javaArgs, bool startServer)
 		{
 			var forgeInstaller = Directory.EnumerateFiles(installPath).FirstOrDefault(f => f.Contains("forge-") && f.Contains("-installer.jar"));
 			if (forgeInstaller == null)
@@ -525,10 +532,22 @@ Example:
 				"--installServer"
 			};
 
-			await RunProcessAsync(installPath, GetJavaExecutable(), arguments);
+			await RunProcessAsync(installPath, GetJavaExecutable(), false, arguments);
+
+			if (startServer)
+			{
+				var forgeLoader = Directory.EnumerateFiles(installPath).FirstOrDefault(f => f.Contains("forge-") && !f.Contains("-installer.jar"));
+
+				if (forgeLoader == null)
+				{
+					Console.WriteLine("Could not find the loader, please launch server manually");
+				}
+
+				await RunProcessAsync(installPath, Path.Combine(installPath, "runtime", "bin", GetJavaExecutable()), true, javaArgs, "-Dsun.stdout.encoding=UTF-8", $"-jar {forgeLoader} nogui");
+			}
 		}
 
-		private static async Task RunProcessAsync(string executingDirectory, string process, params string[] arguments)
+		private static async Task RunProcessAsync(string executingDirectory, string process, bool redirectInput, params string[] arguments)
 		{
 			Console.WriteLine($"Executing \"{process}\" in \"{executingDirectory}\", with arguments: \"{string.Join(" ", arguments)}\"");
 			using var p = new Process();
@@ -538,7 +557,7 @@ Example:
 				RedirectStandardOutput = true,
 				RedirectStandardError = true,
 				UseShellExecute = false,
-				CreateNoWindow = true
+				CreateNoWindow = !redirectInput
 			};
 
 			p.OutputDataReceived += (sender, args) => Console.WriteLine(args.Data);
