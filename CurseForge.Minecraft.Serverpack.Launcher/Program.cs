@@ -24,7 +24,13 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 
 		private static async Task<int> Main(params string[] args)
 		{
-			return await SetupCommand().InvokeAsync(args);
+			var command = SetupCommand();
+			if (args.Length == 0)
+			{
+				await command.InvokeAsync("--help");
+			}
+
+			return await command.InvokeAsync(args);
 		}
 
 		private static RootCommand SetupCommand()
@@ -113,18 +119,19 @@ Example:
 				ArgumentType = typeof(int),
 				Arity = ArgumentArity.ZeroOrOne,
 				Description = "Sets the project id / modpack id to use",
-
 			});
 
 			command.AddArgument(new("fileid")
 			{
 				ArgumentType = typeof(int),
+				Arity = ArgumentArity.ZeroOrOne,
 				Description = "Sets the file id to use"
 			});
 
 			command.AddArgument(new("server-path")
 			{
 				ArgumentType = typeof(string),
+				Arity = ArgumentArity.ZeroOrOne,
 				Description = "Sets the server path, where to install the modpack server"
 			});
 
