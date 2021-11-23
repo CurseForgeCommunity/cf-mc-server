@@ -27,7 +27,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 			var command = SetupCommand();
 			if (args.Length == 0)
 			{
-				await command.InvokeAsync("--help");
+				return await command.InvokeAsync("--help");
 			}
 
 			return await command.InvokeAsync(args);
