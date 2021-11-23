@@ -124,14 +124,12 @@ Example:
 			command.AddArgument(new("fileid")
 			{
 				ArgumentType = typeof(int),
-				Arity = ArgumentArity.ZeroOrOne,
 				Description = "Sets the file id to use"
 			});
 
 			command.AddArgument(new("server-path")
 			{
 				ArgumentType = typeof(string),
-				Arity = ArgumentArity.ZeroOrOne,
 				Description = "Sets the server path, where to install the modpack server"
 			});
 
