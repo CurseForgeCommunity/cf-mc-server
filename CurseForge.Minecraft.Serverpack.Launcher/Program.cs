@@ -53,8 +53,8 @@ Example:
 			command.AddOption(
 				new(
 					aliases: new[] {
-			"--projectid",
-			"-pid"
+						"--projectid",
+						"-pid"
 					},
 					description: "Sets the project id / modpack id to use",
 					argumentType: typeof(long)
