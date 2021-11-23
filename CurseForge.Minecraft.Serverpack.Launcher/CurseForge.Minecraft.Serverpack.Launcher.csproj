@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <PackageReference Include="CurseForge.APIClient" Version="1.0.0" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.21308.1" />
   </ItemGroup>
 
 </Project>

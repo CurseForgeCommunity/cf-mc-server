@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.CommandLine;
+using System.CommandLine.Invocation;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -19,21 +21,109 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 
 		const string FabricInstallerUrl = "https://meta.fabricmc.net/v2/versions/installer";
 
-		static async Task<int> Main(string[] args)
+		static async Task<int> Main(params string[] args)
 		{
-			if (args.Length < 3)
-			{
-				Console.WriteLine("Too few arguments, needs a project ID for a modpack (Minecraft) that has server files and a path where to install the server");
-				Console.WriteLine("cf-mc-server [projectId] [fileId] [server install path]");
-				Console.WriteLine();
-				Console.WriteLine("Examples:");
-				Console.WriteLine("cf-mc-server 477455 3295539 \"c:\\mc-server\"");
-				Console.WriteLine("-- Installs the modpack \"Too Many Projects\", into the \"mc-server\" folder in the C-drive");
-				Console.WriteLine();
-				Console.WriteLine("Don't use the root of a drive to install things.");
-				return -1;
-			}
+			var command = SetupCommand();
 
+			return await command.InvokeAsync(args);
+		}
+
+		private static RootCommand SetupCommand()
+		{
+			RootCommand command = new RootCommand(
+				description: @"Installs a CurseForge Modpack as a server as far as it can.
+
+Example:
+  cf-mc-server 477455 3295539 ""c:\mc-server""
+  -- Installs the modpack ""Too Many Projects"", into the ""mc-server"" folder in the C-drive"
+			);
+
+			SetupArguments(command);
+			SetupOptions(command);
+
+			command.Handler = CommandHandler.Create<long, long, string, string>(async (projectId, fileId, serverPath, javaArgs) => {
+				await InstallServer(projectId.ToString(), fileId.ToString(), serverPath, javaArgs);
+			});
+			return command;
+		}
+
+		private static void SetupOptions(RootCommand command)
+		{
+			command.AddOption(
+				new(
+					aliases: new[] {
+			"--projectid",
+			"-pid"
+					},
+					description: "Sets the project id / modpack id to use",
+					argumentType: typeof(long)
+				)
+			);
+
+			command.AddOption(
+				new(
+					aliases: new[] {
+						"--fileid",
+						"-fid"
+					},
+					description: "Sets the file id to use",
+					argumentType: typeof(long)
+				)
+			);
+
+			command.AddOption(
+				new(
+					aliases: new[] {
+						"--server-path",
+						"-sp"
+					},
+					description: "Sets the server path, where to install the modpack server",
+					argumentType: typeof(string)
+				)
+			);
+
+			command.AddOption(
+				new(
+					aliases: new[] {
+						"--java-args",
+						"-ja"
+					},
+					description: "Sets the java arguments to be used when launching the Minecraft server",
+					argumentType: typeof(string)
+				)
+			);
+		}
+
+		private static void SetupArguments(RootCommand command)
+		{
+			command.AddArgument(new("projectid")
+			{
+				ArgumentType = typeof(long),
+				Arity = ArgumentArity.ZeroOrOne,
+				Description = "Sets the project id / modpack id to use"
+			});
+			command.AddArgument(new("fileid")
+			{
+				ArgumentType = typeof(long),
+				//Arity = ArgumentArity.ZeroOrOne,
+				Description = "Sets the file id to use"
+			});
+			command.AddArgument(new("server-path")
+			{
+				ArgumentType = typeof(string),
+				//Arity = ArgumentArity.ZeroOrOne,
+				Description = "Sets the server path, where to install the modpack server"
+			});
+			command.AddArgument(new("java-arguments")
+			{
+				ArgumentType = typeof(string),
+				Arity = ArgumentArity.ZeroOrOne,
+				Description = "Sets the java arguments to be used when launching the Minecraft server"
+			});
+		}
+
+		private static async Task<int> InstallServer(params string[] args)
+		{
 			var cfApiKey = Environment.GetEnvironmentVariable("CFAPI_Key");
 			_ = long.TryParse(Environment.GetEnvironmentVariable("CFAPI_PartnerId"), out long cfPartnerId);
 			var cfContactEmail = Environment.GetEnvironmentVariable("CFAPI_ContactEmail");
@@ -65,7 +155,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 				return -1;
 			}
 
-			if (!int.TryParse(args[0], out int modId))
+			if (!int.TryParse(args[0], out var modId))
 			{
 				Console.WriteLine("Error: First parameter is not a project id, use only numbers");
 				return -1;
@@ -73,7 +163,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 
 			Console.WriteLine($"Using project: {modId}");
 
-			if (!int.TryParse(args[1], out int fileId))
+			if (!int.TryParse(args[1], out var fileId))
 			{
 				Console.WriteLine("Error: Second parameter is not a file id, use only numbers");
 				return -1;
@@ -103,6 +193,16 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 
 			using (var cfApiClient = new APIClient.ApiClient(cfApiKey, cfPartnerId, cfContactEmail))
 			{
+				try
+				{
+					await cfApiClient.GetGamesAsync();
+				}
+				catch
+				{
+					Console.WriteLine("Error: Could not contact the CurseForge API, please check your API key");
+					return -1;
+				}
+
 				var modLoader = MinecraftModloader.Unknown;
 				var modInfo = await cfApiClient.GetModAsync(modId);
 
