@@ -241,6 +241,7 @@ Example:
 				var manifest = JsonSerializer.Deserialize<MinecraftManifest>(File.ReadAllText(manifestPath));
 
 				using HttpClient hc = new();
+				hc.DefaultRequestHeaders.TryAddWithoutValidation("x-api-key", cfApiKey);
 				var gameVersionManifest = await hc.GetFromJsonAsync<MinecraftVersionManifest>(MinecraftVersionManifestUrl);
 				var mcVersion = gameVersionManifest.Versions.FirstOrDefault(version => version.Id == manifest.Minecraft.Version);
 
@@ -383,7 +384,7 @@ Example:
 		private static async Task<ModLoaderInfo<T>> GetLoaderDependencies<T>(HttpClient _client, string minecraftVersion, string loaderVersion) where T : ModLoaderVersionInfo
 		{
 			var loaderVersionEndpoint = typeof(T).Name == "FabricModLoaderInfo" ? $"{loaderVersion}-{minecraftVersion}" : loaderVersion;
-			var modloaderInfo = await _client.GetFromJsonAsync<ModLoaderInfo<T>>($"https://addons-ecs.forgesvc.net/api/v2/minecraft/modloader/{loaderVersionEndpoint}");
+			var modloaderInfo = await _client.GetFromJsonAsync<ModLoaderInfo<T>>($"https://api.curseforge.com/api/v2/minecraft/modloader/{loaderVersionEndpoint}");
 
 			modloaderInfo.VersionInfo = JsonSerializer.Deserialize<T>(modloaderInfo.NonMapped["versionJson"].ToString());
 
