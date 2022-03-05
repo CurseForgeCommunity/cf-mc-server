@@ -4,6 +4,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
     <AssemblyName>cf-mc-server</AssemblyName>
+	<PublishSingleFile>true</PublishSingleFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
