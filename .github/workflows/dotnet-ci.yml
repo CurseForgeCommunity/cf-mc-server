@@ -40,8 +40,4 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          # Define some variables for things we need
-          tag=$(git describe --tags --abbrev=0)
-          release_name="CurseForge.Minecraft.Serverpack.Launcher-$tag-${{ matrix.target }}"
-          # Build everything
-          dotnet publish CurseForge.Minecraft.Serverpack.Launcher/CurseForge.Minecraft.Serverpack.Launcher.csproj --runtime "${{ matrix.target }}" -c Release -o "$release_name" --self-contained
+          dotnet publish CurseForge.Minecraft.Serverpack.Launcher/CurseForge.Minecraft.Serverpack.Launcher.csproj --runtime "${{ matrix.target }}" -c Release -o published --self-contained
