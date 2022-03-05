@@ -1,0 +1,47 @@
+name: .NET Continuous Integration
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: Build Server launcher
+    strategy:
+      matrix:
+        kind: ['linux', 'windows', 'macOS']
+        include:
+          - kind: linux
+            os: ubuntu-latest
+            target: linux-x64
+          - kind: windows
+            os: windows-latest
+            target: win-x64
+          - kind: macOS
+            os: macos-latest
+            target: osx-x64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 5.0.x
+          
+      - name: Restore dependencies
+      run: dotnet restore
+      
+      - name: Build
+        shell: bash
+        run: |
+          # Define some variables for things we need
+          tag=$(git describe --tags --abbrev=0)
+          release_name="CurseForge.Minecraft.Serverpack.Launcher-$tag-${{ matrix.target }}"
+          # Build everything
+          dotnet publish CurseForge.Minecraft.Serverpack.Launcher/CurseForge.Minecraft.Serverpack.Launcher.csproj --runtime "${{ matrix.target }}" -c Release -o "$release_name" --self-contained
