@@ -237,6 +237,20 @@ Example:
 				if (!Directory.Exists(installPath))
 				{
 					ZipFile.ExtractToDirectory(dlPath, installPath, true);
+
+					var overrides = Path.Combine(installPath, "overrides");
+
+					if (Directory.Exists(overrides))
+					{
+						var allFiles = Directory.GetFiles(overrides, "*.*", SearchOption.AllDirectories);
+						foreach (var file in allFiles)
+						{
+							var overrideFile = new FileInfo(file);
+							var newFilePath = new FileInfo(overrideFile.FullName.Replace($"{Path.DirectorySeparatorChar}overrides{Path.DirectorySeparatorChar}", Path.DirectorySeparatorChar.ToString()));
+							Directory.CreateDirectory(newFilePath.Directory.FullName);
+							File.Copy(overrideFile.FullName, newFilePath.FullName, true);
+						}
+					}
 				}
 
 				var manifest = JsonSerializer.Deserialize<MinecraftManifest>(File.ReadAllText(manifestPath));
