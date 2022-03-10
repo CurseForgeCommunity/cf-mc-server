@@ -12,6 +12,7 @@ using System.Net.Http.Json;
 using System.Net.Mail;
 using System.Text.Json;
 using System.Threading.Tasks;
+using CurseForge.APIClient;
 
 namespace CurseForge.Minecraft.Serverpack.Launcher
 {
@@ -261,7 +262,7 @@ Example:
 				{
 					foreach (var modloader in manifest.Minecraft.ModLoaders.Where(ml => ml.Id.StartsWith("fabric-") && ml.Primary))
 					{
-						var modloaderInfo = await GetLoaderDependencies<FabricModLoaderInfo>(hc, manifest.Minecraft.Version, modloader.Id);
+						var modloaderInfo = await GetLoaderDependencies<FabricModLoaderInfo>(cfApiClient, manifest.Minecraft.Version, modloader.Id);
 						await DownloadLoaderDependencies(hc, installPath, modloaderInfo);
 						modloaderVersion = modloaderInfo.NonMapped["forgeVersion"].ToString();
 						minecraftVersion = modloaderInfo.NonMapped["minecraftVersion"].ToString();
@@ -273,7 +274,7 @@ Example:
 				{
 					foreach (var modloader in manifest.Minecraft.ModLoaders.Where(ml => ml.Id.StartsWith("forge-") && ml.Primary))
 					{
-						var modloaderInfo = await GetLoaderDependencies<ForgeModLoaderInfo>(hc, manifest.Minecraft.Version, modloader.Id);
+						var modloaderInfo = await GetLoaderDependencies<ForgeModLoaderInfo>(cfApiClient, manifest.Minecraft.Version, modloader.Id);
 						await DownloadLoaderDependencies(hc, installPath, modloaderInfo);
 						modloaderVersion = modloaderInfo.NonMapped["forgeVersion"].ToString();
 						minecraftVersion = modloaderInfo.NonMapped["minecraftVersion"].ToString();
@@ -381,14 +382,31 @@ Example:
 			return false;
 		}
 
-		private static async Task<ModLoaderInfo<T>> GetLoaderDependencies<T>(HttpClient _client, string minecraftVersion, string loaderVersion) where T : ModLoaderVersionInfo
+		private static async Task<ModLoaderInfo<T>> GetLoaderDependencies<T>(ApiClient _client, string minecraftVersion, string loaderVersion) where T : ModLoaderVersionInfo
 		{
 			var loaderVersionEndpoint = typeof(T).Name == "FabricModLoaderInfo" ? $"{loaderVersion}-{minecraftVersion}" : loaderVersion;
-			var modloaderInfo = await _client.GetFromJsonAsync<ModLoaderInfo<T>>($"https://api.curseforge.com/api/v2/minecraft/modloader/{loaderVersionEndpoint}");
+			var modloaderInfo = (await _client.GetSpecificMinecraftModloaderInfo(loaderVersionEndpoint)).Data;
 
-			modloaderInfo.VersionInfo = JsonSerializer.Deserialize<T>(modloaderInfo.NonMapped["versionJson"].ToString());
+			var mli = new ModLoaderInfo<T>
+			{
+				DownloadUrl = new Uri(modloaderInfo.DownloadUrl),
+				Filename = modloaderInfo.Filename,
+				GameVersionId = modloaderInfo.GameVersionId,
+				Id = modloaderInfo.Id,
+				InstallProfileJson = modloaderInfo.InstallProfileJson,
+				LibrariesInstallLocation = modloaderInfo.LibrariesInstallLocation,
+				MinecraftGameVersionId = modloaderInfo.MinecraftGameVersionId,
+				Name = modloaderInfo.Name,
+				Type = (int)modloaderInfo.Type,
+				VersionInfo = JsonSerializer.Deserialize<T>(modloaderInfo.VersionJson.ToString()),
+				NonMapped = new Dictionary<string, object>
+				{
+					{ "minecraftVersion", modloaderInfo.MinecraftVersion },
+					{ "forgeVersion", modloaderInfo.ForgeVersion }
+				}
+			};
 
-			return modloaderInfo;
+			return mli;
 		}
 
 		private static async Task DownloadLoaderDependencies<T>(HttpClient _client, string installPath, ModLoaderInfo<T> info)
