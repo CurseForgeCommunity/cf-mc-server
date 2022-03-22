@@ -72,6 +72,11 @@ This will search for modpacks from CurseForge.");
 
 		private async static Task<int> InteractiveInstallation()
 		{
+			if (!CheckRequiredDependencies())
+			{
+				return -1;
+			}
+
 			Console.WriteLine("Activating interactive mode. Please follow the instructions.");
 			Console.WriteLine();
 
@@ -142,19 +147,73 @@ This will search for modpacks from CurseForge.");
 				{ }
 			}
 
-			if (selectedMod != null)
+			if (selectedMod == null)
 			{
-
-			}
-			else
-			{
-				Console.WriteLine("No mod selected, aborting installation");
+				Console.WriteLine("No modpack selected, aborting installation");
 				return -1;
 			}
+
+			while (!await HandleProjectVersionSearch(cfApiClient, selectedMod))
+			{ }
+
+			if (selectedVersion == null)
+			{
+				Console.WriteLine("No modpack version selected, aborting installation");
+				return -1;
+			}
+
+			if (!AnsiConsole.Confirm($"Do you want to install {selectedMod.Name}, with version {selectedVersion.DisplayName}, into {serverPath}?"))
+			{
+				Console.WriteLine("Well, ok then. Bye!");
+				return 1;
+			}
+
+			var javaArgs = string.Empty;
+			var startServer = AnsiConsole.Confirm("Do you want to start the server directly?");
+
+			if (startServer)
+			{
+				javaArgs = AnsiConsole.Ask<string>("Do you want any [orange1 bold]java arguments[/] for the server?");
+			}
+
+			await InstallServer(selectedMod.Id, selectedVersion.Id, serverPath, javaArgs, startServer);
 
 			await Task.Delay(500);
 
 			return 1;
+		}
+
+		private static Mod selectedMod = null;
+		private static APIClient.Models.Files.File selectedVersion = null;
+
+		private static async Task<bool> HandleProjectVersionSearch(ApiClient cfApiClient, Mod selectedMod)
+		{
+			AnsiConsole.Write(new Rule($"Version selection of {selectedMod.Name} to install"));
+
+			var versions = await AnsiConsole.Status()
+				.StartAsync("Fetching versions", async ctx => {
+					return await cfApiClient.GetModFilesAsync(selectedMod.Id);
+				});
+
+			// Only show approved files for download
+			var validVersions = versions.Data.Where(v => v.FileStatus == APIClient.Models.Files.FileStatus.Approved);
+
+			var versionSelection = AnsiConsole.Prompt(
+				new SelectionPrompt<APIClient.Models.Files.File>()
+				.Title("Select [orange1 bold]modpack version[/]")
+				.MoreChoicesText("[grey](Move up and down to reveal more versions)[/]")
+				.AddChoices(validVersions)
+				.UseConverter(v => $"{v.DisplayName} ({v.ReleaseType}, {string.Join(", ", v.SortableGameVersions.Select(gv => gv.GameVersionName))}) Released {v.FileDate.Date.ToShortDateString()}")
+				.HighlightStyle(new Style(Color.Orange1))
+			);
+
+			if (AnsiConsole.Confirm($"{versionSelection.DisplayName} selected, is this the correct version?"))
+			{
+				selectedVersion = versionSelection;
+				return true;
+			}
+
+			return false;
 		}
 
 		private static async Task<bool> HandleProjectSearch(ApiClient cfApiClient)
@@ -209,7 +268,7 @@ This will search for modpacks from CurseForge.");
 			return false;
 		}
 
-		private static Mod selectedMod = null;
+
 
 		private static async Task<bool> HandleProjectIdSearch(ApiClient cfApiClient)
 		{
@@ -586,7 +645,7 @@ This will search for modpacks from CurseForge.");
 
 			if (!javaExists)
 			{
-				Console.WriteLine($"Error: {GetJavaExecutable()} missing in PATH. Please install Java");
+				Console.WriteLine($"Error: {GetJavaExecutable()} missing in PATH. Please install Java before continuing.");
 			}
 
 			return javaExists;
@@ -764,6 +823,10 @@ This will search for modpacks from CurseForge.");
 			{
 				await RunProcessAsync(installPath, Path.Combine(installPath, "runtime", "bin", GetJavaExecutable()), true, javaArgs, "-Dsun.stdout.encoding=UTF-8", $"-jar fabric-server-launch.jar nogui");
 			}
+			else
+			{
+				AnsiConsole.Write(new Markup($"To start the server, you can write [orange1 bold]{Path.Combine(installPath, "runtime", "bin", GetJavaExecutable())} {javaArgs} -Dsun.stdout.encoding=UTF-8 -jar fabric-server-launch.jar nogui[/]"));
+			}
 		}
 
 		private static async Task InstallForgeAsync(string installPath, string javaArgs, bool startServer)
@@ -781,16 +844,20 @@ This will search for modpacks from CurseForge.");
 
 			await RunProcessAsync(installPath, GetJavaExecutable(), false, arguments);
 
+			var forgeLoader = Directory.EnumerateFiles(installPath).FirstOrDefault(f => f.Contains("forge-") && !f.Contains("-installer.jar"));
+
+			if (forgeLoader == null)
+			{
+				Console.WriteLine("Could not find the loader, please launch server manually");
+			}
+
 			if (startServer)
 			{
-				var forgeLoader = Directory.EnumerateFiles(installPath).FirstOrDefault(f => f.Contains("forge-") && !f.Contains("-installer.jar"));
-
-				if (forgeLoader == null)
-				{
-					Console.WriteLine("Could not find the loader, please launch server manually");
-				}
-
 				await RunProcessAsync(installPath, Path.Combine(installPath, "runtime", "bin", GetJavaExecutable()), true, javaArgs, "-Dsun.stdout.encoding=UTF-8", $"-jar {forgeLoader} nogui");
+			}
+			else
+			{
+				AnsiConsole.Write(new Markup($"To start the server, you can write [orange1 bold]{Path.Combine(installPath, "runtime", "bin", GetJavaExecutable())} {javaArgs} -Dsun.stdout.encoding=UTF-8 -jar {forgeLoader} nogui[/]"));
 			}
 		}
 
