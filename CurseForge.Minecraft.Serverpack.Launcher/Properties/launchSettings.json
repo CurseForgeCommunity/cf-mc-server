@@ -1,6 +1,10 @@
 {
   "profiles": {
-    "CurseForge.Minecraft.Serverpack.Launcher": {
+    "Interactive mode": {
+      "commandName": "Project",
+      "commandLineArgs": "interactive"
+    },
+    "Specific modpack": {
       "commandName": "Project",
       "commandLineArgs": "477455 3295539 \"c:\\mc-server\""
     }
