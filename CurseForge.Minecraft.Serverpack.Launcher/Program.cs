@@ -70,7 +70,7 @@ This will search for modpacks from CurseForge.");
 			command.Add(interactive);
 		}
 
-		private async static Task<int> InteractiveInstallation()
+		private static async Task<int> InteractiveInstallation()
 		{
 			if (!CheckRequiredDependencies())
 			{
@@ -227,7 +227,7 @@ This will search for modpacks from CurseForge.");
 			var searchResults = await AnsiConsole.Status()
 				.StartAsync("Searching for modpacks", async ctx => {
 					List<Mod> modsFound = new List<Mod>();
-					var modResults = await cfApiClient.SearchModsAsync(432, 4471, searchFilter: searchFilter, sortField: ModsSearchSortField.Popularity, sortOrder: true);
+					var modResults = await cfApiClient.SearchModsAsync(432, 4471, searchFilter: searchFilter, sortField: ModsSearchSortField.Popularity, sortOrder: ModsSearchSortOrder.Descending);
 					await Task.Delay(250);
 					modsFound.AddRange(modResults.Data);
 
@@ -237,7 +237,7 @@ This will search for modpacks from CurseForge.");
 						while (modsFound.Count < modResults.Pagination.TotalCount)
 						{
 							ctx.Status($"Fetching more results ({modResults.Pagination.PageSize * (index + 1)} / {modResults.Pagination.TotalCount})");
-							var moreResults = await cfApiClient.SearchModsAsync(432, 4471, searchFilter: searchFilter, sortField: ModsSearchSortField.Popularity, sortOrder: true, index: index++);
+							var moreResults = await cfApiClient.SearchModsAsync(432, 4471, searchFilter: searchFilter, sortField: ModsSearchSortField.Popularity, sortOrder: ModsSearchSortOrder.Descending, index: index++);
 							modsFound.AddRange(moreResults.Data);
 							await Task.Delay(250);
 						}
@@ -267,8 +267,6 @@ This will search for modpacks from CurseForge.");
 
 			return false;
 		}
-
-
 
 		private static async Task<bool> HandleProjectIdSearch(ApiClient cfApiClient)
 		{
