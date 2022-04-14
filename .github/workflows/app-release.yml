@@ -21,9 +21,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-          
-      - name: Replace credentials
-        run: sed -i 's/$REPLACEME$/${{ secrets.SERVERPACKAPI }}/g' Program.cs
+
+      - name: Inject CF API Key
+        uses: datamonsters/replace-action
+        with:
+          replacements: '$REPLACEME$=${{ secrets.SERVERPACKAPI }}'
+          files: Program.cs
 
       - name: Setup dotnet
         uses: actions/setup-dotnet@v1
