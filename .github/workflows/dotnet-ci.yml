@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v2
         
       - name: Inject CF API Key
-        uses: datamonsters/replace-action
+        uses: datamonsters/replace-action@v2
         with:
           replacements: '$REPLACEME$=$FOOLEDYOU$'
           files: Program.cs
