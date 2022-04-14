@@ -29,11 +29,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         
-      - name: Inject CF API Key
-        uses: datamonsters/replace-action@v2
-        with:
-          replacements: '$REPLACEME$=$FOOLEDYOU$'
-          files: ./CurseForge.Minecraft.Serverpack.Launcher/Program.cs
+      - name: Replace credentials
+        run: sed -i 's/$REPLACEME$/$FOOLEDYOU$/g' ./CurseForge.Minecraft.Serverpack.Launcher/Program.cs
 
       - name: Setup dotnet
         uses: actions/setup-dotnet@v1
