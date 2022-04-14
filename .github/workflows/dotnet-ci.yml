@@ -33,7 +33,7 @@ jobs:
         uses: datamonsters/replace-action@v2
         with:
           replacements: '$REPLACEME$=$FOOLEDYOU$'
-          files: Program.cs
+          files: ./CurseForge.Minecraft.Serverpack.Launcher/Program.cs
 
       - name: Setup dotnet
         uses: actions/setup-dotnet@v1
