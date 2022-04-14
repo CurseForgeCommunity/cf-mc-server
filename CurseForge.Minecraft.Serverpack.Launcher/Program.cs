@@ -475,6 +475,12 @@ This will search for modpacks from CurseForge.");
 					return -1;
 				}
 
+				if (!(modInfo.Data.AllowModDistribution ?? true) || !modInfo.Data.IsAvailable)
+				{
+					AnsiConsole.WriteLine("[bold red]The author of this modpack has not made it available for download through third party tools.");
+					return -1;
+				}
+
 				var modFile = await cfApiClient.GetModFileAsync(modId, fileId);
 
 				var dlPath = Path.Combine(path, modFile.Data.FileName);
