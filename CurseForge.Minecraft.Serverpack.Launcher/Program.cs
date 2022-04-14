@@ -489,7 +489,9 @@ This will search for modpacks from CurseForge.");
 
 				if (!File.Exists(dlPath))
 				{
+#pragma warning disable SYSLIB0014 // Type or member is obsolete
 					using WebClient wc = new();
+#pragma warning restore SYSLIB0014 // Type or member is obsolete
 					await wc.DownloadFileTaskAsync(modFile.Data.DownloadUrl, dlPath);
 				}
 
@@ -562,54 +564,7 @@ This will search for modpacks from CurseForge.");
 					return -1;
 				}
 
-				var downloadItems = new List<LibraryDownloadItem>();
-
-				foreach (var lib in mcVersionInfo.Libraries)
-				{
-					downloadItems.AddRange(lib.GetDownloadItems() ?? new());
-				}
-
-				using (WebClient wc = new())
-				{
-					foreach (var asset in downloadItems)
-					{
-						var installDir = Path.Combine(installPath, "libraries", asset.FilePath);
-						Directory.CreateDirectory(installDir);
-
-						var fileDownloadPath = Path.Combine(installDir, asset.Url.Segments.Last());
-						if (!File.Exists(fileDownloadPath))
-						{
-							Console.WriteLine($"Downloading: {fileDownloadPath}");
-							await wc.DownloadFileTaskAsync(asset.Url, fileDownloadPath);
-						}
-					}
-
-					Console.WriteLine("Downloaded all required assets for Minecraft");
-
-					var serverJar = Path.Combine(installPath, "server.jar");
-					if (!File.Exists(serverJar))
-					{
-						Console.WriteLine("Downloading the server file");
-						await wc.DownloadFileTaskAsync(mcVersionInfo.Downloads.Server.Url, serverJar);
-						Console.WriteLine("Server.jar downloaded");
-					}
-
-					Console.WriteLine("Fixing EULA for you");
-					await File.WriteAllTextAsync(Path.Combine(installPath, "eula.txt"), "eula=true");
-
-					Console.WriteLine("Downloading mods for modpack");
-					foreach (var file in manifest.Files)
-					{
-						var mod = await cfApiClient.GetModFileAsync((int)file.ProjectId, (int)file.FileId);
-						var modPath = Path.Combine(installPath, "mods", mod.Data.FileName);
-						Directory.CreateDirectory(Path.GetDirectoryName(modPath));
-						if (!File.Exists(modPath))
-						{
-							Console.WriteLine($"Downloading (mods): {mod.Data.DisplayName} ({mod.Data.FileName})");
-							await wc.DownloadFileTaskAsync(mod.Data.DownloadUrl, modPath);
-						}
-					}
-				}
+				await DownloadMinecraftLibraries(cfApiClient, installPath, manifest, mcVersionInfo);
 
 				switch (modLoader)
 				{
@@ -626,6 +581,58 @@ This will search for modpacks from CurseForge.");
 			}
 
 			return 0;
+		}
+
+		private static async Task DownloadMinecraftLibraries(ApiClient cfApiClient, string installPath, MinecraftManifest manifest, MinecraftVersionInfo mcVersionInfo)
+		{
+			var downloadItems = new List<LibraryDownloadItem>();
+
+			foreach (var lib in mcVersionInfo.Libraries)
+			{
+				downloadItems.AddRange(lib.GetDownloadItems() ?? new());
+			}
+
+#pragma warning disable SYSLIB0014 // Type or member is obsolete
+			using WebClient wc = new();
+#pragma warning restore SYSLIB0014 // Type or member is obsolete
+			foreach (var asset in downloadItems)
+			{
+				var installDir = Path.Combine(installPath, "libraries", asset.FilePath);
+				Directory.CreateDirectory(installDir);
+
+				var fileDownloadPath = Path.Combine(installDir, asset.Url.Segments.Last());
+				if (!File.Exists(fileDownloadPath))
+				{
+					Console.WriteLine($"Downloading: {fileDownloadPath}");
+					await wc.DownloadFileTaskAsync(asset.Url, fileDownloadPath);
+				}
+			}
+
+			Console.WriteLine("Downloaded all required assets for Minecraft");
+
+			var serverJar = Path.Combine(installPath, "server.jar");
+			if (!File.Exists(serverJar))
+			{
+				Console.WriteLine("Downloading the server file");
+				await wc.DownloadFileTaskAsync(mcVersionInfo.Downloads.Server.Url, serverJar);
+				Console.WriteLine("Server.jar downloaded");
+			}
+
+			Console.WriteLine("Fixing EULA for you");
+			await File.WriteAllTextAsync(Path.Combine(installPath, "eula.txt"), "eula=true");
+
+			Console.WriteLine("Downloading mods for modpack");
+			foreach (var file in manifest.Files)
+			{
+				var mod = await cfApiClient.GetModFileAsync((int)file.ProjectId, (int)file.FileId);
+				var modPath = Path.Combine(installPath, "mods", mod.Data.FileName);
+				Directory.CreateDirectory(Path.GetDirectoryName(modPath));
+				if (!File.Exists(modPath))
+				{
+					Console.WriteLine($"Downloading (mods): {mod.Data.DisplayName} ({mod.Data.FileName})");
+					await wc.DownloadFileTaskAsync(mod.Data.DownloadUrl, modPath);
+				}
+			}
 		}
 
 		internal const string CFApiKey = "$REPLACEME$";
@@ -738,7 +745,9 @@ This will search for modpacks from CurseForge.");
 					break;
 			}
 
+#pragma warning disable SYSLIB0014 // Type or member is obsolete
 			using WebClient wc = new();
+#pragma warning restore SYSLIB0014 // Type or member is obsolete
 			foreach (var asset in downloadUrls)
 			{
 				var installDir = Path.Combine(installPath, "libraries", asset.FilePath);
@@ -808,7 +817,9 @@ This will search for modpacks from CurseForge.");
 
 			Console.WriteLine("Downloading now");
 
+#pragma warning disable SYSLIB0014 // Type or member is obsolete
 			using WebClient wc = new();
+#pragma warning restore SYSLIB0014 // Type or member is obsolete
 			foreach (var javaFile in javaVersionManifest.Files.Where(f => f.Value.Type == "file"))
 			{
 				var javaFilePath = Path.Combine(installPath, "runtime", javaFile.Key);
