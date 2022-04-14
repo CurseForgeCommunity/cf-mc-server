@@ -28,6 +28,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        
+      - name: Replace credentials
+        run: sed -i 's/$REPLACEME$/$FOOLEDYOU$/g' Program.cs
 
       - name: Setup dotnet
         uses: actions/setup-dotnet@v1
