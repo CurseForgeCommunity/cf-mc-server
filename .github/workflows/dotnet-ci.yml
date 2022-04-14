@@ -42,4 +42,3 @@ jobs:
         shell: bash
         run: |
           dotnet publish CurseForge.Minecraft.Serverpack.Launcher/CurseForge.Minecraft.Serverpack.Launcher.csproj --runtime "${{ matrix.target }}" -c Release -o published --self-contained
-          cat CurseForge.Minecraft.Serverpack.Launcher/Program.cs
