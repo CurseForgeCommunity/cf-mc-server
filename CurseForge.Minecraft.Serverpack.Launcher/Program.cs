@@ -106,7 +106,7 @@ This will search for modpacks from CurseForge.");
 				})
 			);
 
-			AnsiConsole.Write("Server will be installed in {0}", serverPath);
+			AnsiConsole.WriteLine("Server will be installed in {0}", serverPath);
 
 			Console.WriteLine();
 
@@ -123,7 +123,14 @@ This will search for modpacks from CurseForge.");
 
 			Console.WriteLine($"Searching with {searchType}");
 
-			GetCfApiInformation(out var cfApiKey, out var cfPartnerId, out var cfContactEmail);
+			GetCfApiInformation(out var cfApiKey, out var cfPartnerId, out var cfContactEmail, out var errors);
+
+			if (errors.Count > 0)
+			{
+				AnsiConsole.WriteLine("[bold red]Please resolve the errors before continuing.[/]");
+				return -1;
+			}
+
 			using ApiClient cfApiClient = new(cfApiKey, cfPartnerId, cfContactEmail);
 
 			try
@@ -408,7 +415,13 @@ This will search for modpacks from CurseForge.");
 
 		private static async Task<int> InstallServer(int modId, int fileId, string path, string javaArgs, bool startServer)
 		{
-			GetCfApiInformation(out var cfApiKey, out var cfPartnerId, out var cfContactEmail);
+			GetCfApiInformation(out var cfApiKey, out var cfPartnerId, out var cfContactEmail, out var errors);
+
+			if (errors.Count > 0)
+			{
+				AnsiConsole.WriteLine("[bold red]Please resolve the errors before continuing.[/]");
+				return -1;
+			}
 
 			if (!CheckRequiredDependencies())
 			{
@@ -609,12 +622,20 @@ This will search for modpacks from CurseForge.");
 			return 0;
 		}
 
-		private static void GetCfApiInformation(out string cfApiKey, out long cfPartnerId, out string cfContactEmail)
+		internal const string CFApiKey = "$REPLACEME$";
+
+		private static void GetCfApiInformation(out string cfApiKey, out long cfPartnerId, out string cfContactEmail, out List<string> errors)
 		{
+			errors = new();
+#if DEBUG
 			cfApiKey = Environment.GetEnvironmentVariable("CFAPI_Key");
 			_ = long.TryParse(Environment.GetEnvironmentVariable("CFAPI_PartnerId"), out cfPartnerId);
 			cfContactEmail = Environment.GetEnvironmentVariable("CFAPI_ContactEmail");
-			List<string> errors = new();
+#else
+			cfApiKey = CFApiKey;
+			cfPartnerId = -1;
+			cfContactEmail = "serverlauncher@nolifeking85.tv";
+#endif
 
 			if (string.IsNullOrWhiteSpace(cfApiKey))
 			{
@@ -817,13 +838,17 @@ This will search for modpacks from CurseForge.");
 
 			await RunProcessAsync(installPath, GetJavaExecutable(), false, arguments);
 
+			var javaPath = Path.Combine(installPath, "runtime", "bin", GetJavaExecutable());
+
+			CreateLaunchScriptIfMissing(installPath, javaPath, javaArgs, "fabric-server-launch.jar");
+
 			if (startServer)
 			{
-				await RunProcessAsync(installPath, Path.Combine(installPath, "runtime", "bin", GetJavaExecutable()), true, javaArgs, "-Dsun.stdout.encoding=UTF-8", $"-jar fabric-server-launch.jar nogui");
+				await RunProcessAsync(installPath, javaPath, true, javaArgs, "-Dsun.stdout.encoding=UTF-8", $"-jar fabric-server-launch.jar nogui");
 			}
 			else
 			{
-				AnsiConsole.Write(new Markup($"To start the server, you can write [orange1 bold]{Path.Combine(installPath, "runtime", "bin", GetJavaExecutable())} {javaArgs} -Dsun.stdout.encoding=UTF-8 -jar fabric-server-launch.jar nogui[/]"));
+				AnsiConsole.Write(new Markup($"To start the server, you can write [orange1 bold]{javaPath} {javaArgs} -Dsun.stdout.encoding=UTF-8 -jar fabric-server-launch.jar nogui[/]"));
 			}
 		}
 
@@ -849,13 +874,59 @@ This will search for modpacks from CurseForge.");
 				Console.WriteLine("Could not find the loader, please launch server manually");
 			}
 
+			var javaPath = Path.Combine(installPath, "runtime", "bin", GetJavaExecutable());
+
+			CreateLaunchScriptIfMissing(installPath, javaPath, javaArgs, forgeLoader);
+
 			if (startServer)
 			{
-				await RunProcessAsync(installPath, Path.Combine(installPath, "runtime", "bin", GetJavaExecutable()), true, javaArgs, "-Dsun.stdout.encoding=UTF-8", $"-jar {forgeLoader} nogui");
+				await RunProcessAsync(installPath, javaPath, true, javaArgs, "-Dsun.stdout.encoding=UTF-8", $"-jar {forgeLoader} nogui");
 			}
 			else
 			{
-				AnsiConsole.Write(new Markup($"To start the server, you can write [orange1 bold]{Path.Combine(installPath, "runtime", "bin", GetJavaExecutable())} {javaArgs} -Dsun.stdout.encoding=UTF-8 -jar {forgeLoader} nogui[/]"));
+				AnsiConsole.Write(new Markup($"To start the server, you can write [orange1 bold]{javaPath} {javaArgs} -Dsun.stdout.encoding=UTF-8 -jar {forgeLoader} nogui[/]"));
+			}
+		}
+
+		private static void CreateLaunchScriptIfMissing(string installPath, string javaPath, string javaArgs, string jarFile)
+		{
+			if (OperatingSystem.IsWindows())
+			{
+				var launchScript = Path.Combine(installPath, "start-server.bat");
+
+				if (!File.Exists(launchScript))
+				{
+					File.WriteAllText(launchScript, $@"@echo OFF
+cd {installPath}
+{javaPath} {javaArgs} -Dsun.stdout.encoding=UTF-8 -jar {jarFile} nogui
+pause");
+				}
+			}
+			else
+			{
+				var launchScript = Path.Combine(installPath, "start-server.sh");
+
+				if (!File.Exists(launchScript))
+				{
+					File.WriteAllText(launchScript, $@"#!/bin/sh
+cd {installPath}
+{javaPath} {javaArgs} -Dsun.stdout.encoding=UTF-8 -jar {jarFile} nogui");
+
+					var p = new Process()
+					{
+						StartInfo = new ProcessStartInfo()
+						{
+							FileName = "chmod",
+							Arguments = $"+x {launchScript}",
+							UseShellExecute = false,
+							CreateNoWindow = true
+						}
+					};
+
+					p.Start();
+					p.StandardOutput.ReadToEnd();
+					p.WaitForExit();
+				}
 			}
 		}
 
