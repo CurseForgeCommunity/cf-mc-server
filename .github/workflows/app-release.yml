@@ -23,8 +23,8 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Replace credentials
-        shell: bash
-        run: sed -i 's/$REPLACEME$/${{ secrets.SERVERPACKAPI }}/g' ./CurseForge.Minecraft.Serverpack.Launcher/Program.cs
+        shell: pwsh
+        run: (Get-Content -path "./CurseForge.Minecraft.Serverpack.Launcher/Program.cs") -replace "$REPLACEME$", "${{ secrets.SERVERPACKAPI }}" | Set-Content -Path "./CurseForge.Minecraft.Serverpack.Launcher/Program.cs"
 
       - name: Setup dotnet
         uses: actions/setup-dotnet@v1
