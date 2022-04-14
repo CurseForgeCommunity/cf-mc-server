@@ -24,7 +24,7 @@ jobs:
 
       - name: Replace credentials
         shell: pwsh
-        run: (Get-Content -path "./CurseForge.Minecraft.Serverpack.Launcher/Program.cs") -replace "$REPLACEME$", "${{ secrets.SERVERPACKAPI }}" | Set-Content -Path "./CurseForge.Minecraft.Serverpack.Launcher/Program.cs"
+        run: (Get-Content -path "./CurseForge.Minecraft.Serverpack.Launcher/Program.cs") -replace "--REPLACEME--", "${{ secrets.SERVERPACKAPI }}" | Set-Content -Path "./CurseForge.Minecraft.Serverpack.Launcher/Program.cs"
 
       - name: Setup dotnet
         uses: actions/setup-dotnet@v1

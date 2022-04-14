@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
@@ -635,7 +635,7 @@ This will search for modpacks from CurseForge.");
 			}
 		}
 
-		internal const string CFApiKey = "$REPLACEME$";
+		internal const string CFApiKey = "--REPLACEME--";
 
 		private static void GetCfApiInformation(out string cfApiKey, out long cfPartnerId, out string cfContactEmail, out List<string> errors)
 		{
