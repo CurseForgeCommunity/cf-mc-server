@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[121],{8070:function(e){e.exports=JSON.parse('[{"name":"Getting started","permalink":"/cf-mc-server/docs/tags/getting-started","count":1},{"name":"Your first server","permalink":"/cf-mc-server/docs/tags/your-first-server","count":1}]')}}]);
