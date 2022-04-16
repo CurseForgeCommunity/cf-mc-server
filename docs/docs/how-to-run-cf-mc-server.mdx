@@ -1,0 +1,102 @@
+---
+id: how-to-run-cf-mc-server
+title: How to run CF-MC-Server
+sidebar_position: 1
+sidebar_label: How to run CF-MC-Server
+tags:
+    - Getting started
+    - Your first server
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+This guide will help you get your first modpack server started!
+
+## Getting Started
+
+First of, you need to have at least one version of Java installed on your computer/server.
+
+You can check if you have Java available in your `PATH`, by typing `java -version` in a terminal.
+
+If you have Java, it should output something like this
+
+```plain
+C:\Users\NoLifeKing> java -version
+
+openjdk version "11.0.12" 2021-07-20
+OpenJDK Runtime Environment Microsoft-25199 (build 11.0.12+7)
+OpenJDK 64-Bit Server VM Microsoft-25199 (build 11.0.12+7, mixed mode)
+```
+
+It could also output other information, this is just the version I happened to have installed.
+
+## Downloading CF-MC-Server
+
+You can download the latest version of the CF-MC-Server executable from [GitHub](https://github.com/CurseForgeCommunity/cf-mc-server/releases/latest).
+
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/curseforgecommunity/cf-mc-server?color=%23f16436&label=CF-MC-Server%20version&style=for-the-badge)](https://github.com/CurseForgeCommunity/cf-mc-server/releases/latest)
+
+Currently we support Windows and Linux.
+
+Unzip this into a directory, where you want it.
+
+## Running the installer in interactive mode (easiest)
+
+And then you can simply start the interactive mode like this
+
+<Tabs groupId="operating-system">
+<TabItem value="linux" label="Linux" default>
+
+First we need to make the executable, well, executable, so run `chmod +x ./cf-mc-server`, otherwise you can't execute anything. :)
+
+```shell
+mc-server@server ~ # chmod +x ./cf-mc-server
+mc-server@server ~ # ./cf-mc-server interactive
+```
+
+</TabItem>
+<TabItem value="windows" label="Windows">
+
+```shell
+C:\cf-mc-server\cf-mc-server.exe interactive
+```
+
+</TabItem>
+
+</Tabs>
+
+And within this interactive setup, you will get the options to:
+
+-   Select path where the server is installed (or use the default)
+-   Choose between using project ID or searching for project name
+-   Select modpack version
+-   If you want to start the server directly after it's done installing
+
+## Running the installer without additional input (harder)
+
+If you already know which modpack and which version you want to run, you can run the tool with arguments to tell it what and where to install it.
+
+<Tabs groupId="operating-system">
+<TabItem value="linux" label="Linux" default>
+
+```shell
+mc-server@server ~ # ./cf-mc-server 477455 3295539 /home/mc-server/servers
+```
+
+</TabItem>
+<TabItem value="windows" label="Windows">
+
+```shell
+C:\cf-mc-server\cf-mc-server.exe 477455 3295539 C:\mc-servers
+```
+
+</TabItem>
+
+</Tabs>
+
+## Startup script
+
+The installer will also create a startup-script, that you can modify to include additional Java arguments, in case you want to increase memory or things like that.
+
+If you are running Linux, you need to make this script executable, so that you can run it afterwards.
