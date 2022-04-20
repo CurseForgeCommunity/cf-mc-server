@@ -32,7 +32,10 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 			var command = SetupCommand();
 			if (args.Length == 0)
 			{
-				return await command.InvokeAsync("--help");
+				await command.InvokeAsync("--help");
+				Console.ReadKey();
+
+				return 0;
 			}
 
 			return await command.InvokeAsync(args);
