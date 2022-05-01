@@ -11,7 +11,7 @@ jobs:
     name: Build Server launcher
     strategy:
       matrix:
-        kind: ['linux', 'windows']
+        kind: ['linux', 'windows', 'macos']
         include:
           - kind: linux
             os: ubuntu-latest
