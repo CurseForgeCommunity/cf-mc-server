@@ -23,7 +23,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 
 			await RunProcessAsync(installPath, GetJavaExecutable(), false, arguments);
 
-			var forgeLoader = Directory.EnumerateFiles(installPath).FirstOrDefault(f => f.Contains("forge-") && !f.Contains("-installer.jar"));
+			var forgeLoader = Directory.EnumerateFiles(installPath, "*.jar", SearchOption.AllDirectories).FirstOrDefault(f => f.Contains("forge-") && !f.Contains("-installer.jar"));
 
 			if (forgeLoader == null)
 			{
@@ -40,7 +40,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 			}
 			else
 			{
-				AnsiConsole.Write(new Markup($"To start the server, you can write [orange1 bold]{javaPath} {javaArgs} -Dsun.stdout.encoding=UTF-8 -jar {forgeLoader} nogui[/]"));
+				AnsiConsole.Write(new Markup($"To start the server, you can write [orange1 bold]{(OperatingSystem.IsWindows() ? "start-server.bat" : "./start-server.sh")}[/]"));
 			}
 		}
 	}

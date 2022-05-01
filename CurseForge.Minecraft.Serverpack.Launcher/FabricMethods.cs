@@ -36,7 +36,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 			}
 			else
 			{
-				AnsiConsole.Write(new Markup($"To start the server, you can write [orange1 bold]{javaPath} {javaArgs} -Dsun.stdout.encoding=UTF-8 -jar fabric-server-launch.jar nogui[/]"));
+				AnsiConsole.Write(new Markup($"To start the server, you can write [orange1 bold]{(OperatingSystem.IsWindows() ? "start-server.bat" : "./start-server.sh")}[/]"));
 			}
 		}
 	}
