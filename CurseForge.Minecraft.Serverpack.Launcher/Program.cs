@@ -27,12 +27,14 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 
 		internal const string CFApiKey = "--REPLACEME--";
 
+		internal static readonly string DirSep = Path.DirectorySeparatorChar.ToString();
+
 		private static async Task<int> Main(params string[] args)
 		{
 			var command = SetupCommand();
 			if (args.Length == 0)
 			{
-				await command.InvokeAsync("--help");
+				await command.InvokeAsync("interactive");
 				Console.ReadKey();
 
 				return 0;
@@ -152,7 +154,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 						foreach (var file in allFiles)
 						{
 							var overrideFile = new FileInfo(file);
-							var newFilePath = new FileInfo(overrideFile.FullName.Replace($"{Path.DirectorySeparatorChar}overrides{Path.DirectorySeparatorChar}", Path.DirectorySeparatorChar.ToString()));
+							var newFilePath = new FileInfo(overrideFile.FullName.Replace($"{DirSep}overrides{DirSep}", DirSep));
 							Directory.CreateDirectory(newFilePath.Directory.FullName);
 							File.Copy(overrideFile.FullName, newFilePath.FullName, true);
 						}
@@ -222,6 +224,15 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 					case MinecraftModloader.Unknown:
 						Console.WriteLine("Error: Could not determine modloader, bailing out");
 						return -1;
+				}
+
+				if (startServer)
+				{
+					await RunProcessAsync(installPath, OperatingSystem.IsWindows() ? "start-server.bat" : "./start-server.sh", true);
+				}
+				else
+				{
+					AnsiConsole.Write(new Markup($"To start the server, you can write [orange1 bold]{(OperatingSystem.IsWindows() ? "start-server.bat" : "./start-server.sh")}[/]"));
 				}
 			}
 

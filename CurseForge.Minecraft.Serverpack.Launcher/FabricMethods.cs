@@ -2,7 +2,6 @@
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Spectre.Console;
 
 namespace CurseForge.Minecraft.Serverpack.Launcher
 {
@@ -29,15 +28,6 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 			var javaPath = Path.Combine(installPath, "runtime", "bin", GetJavaExecutable());
 
 			CreateLaunchScriptIfMissing(installPath, javaPath, javaArgs, "fabric-server-launch.jar");
-
-			if (startServer)
-			{
-				await RunProcessAsync(installPath, javaPath, true, javaArgs, "-Dsun.stdout.encoding=UTF-8", $"-jar fabric-server-launch.jar nogui");
-			}
-			else
-			{
-				AnsiConsole.Write(new Markup($"To start the server, you can write [orange1 bold]{(OperatingSystem.IsWindows() ? "start-server.bat" : "./start-server.sh")}[/]"));
-			}
 		}
 	}
 }

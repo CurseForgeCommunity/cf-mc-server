@@ -18,6 +18,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 			}
 
 			Console.WriteLine("Activating interactive mode. Please follow the instructions.");
+			Console.WriteLine("If you want to know other ways to use this, please use the argument --help");
 			Console.WriteLine();
 
 			AnsiConsole.Write(new FigletText("CurseForge Server Installer").LeftAligned().Color(Color.Orange1));
@@ -228,7 +229,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 
 			if (modInfo != null && modInfo.Data.Categories.Any(c => c.ClassId == 4471))
 			{
-				if (AnsiConsole.Confirm($"{modInfo.Data.Name} selected, is this the correct modpack?"))
+				if (AnsiConsole.Confirm($"{modInfo.Data.Name} by {modInfo.Data.Authors?.FirstOrDefault()?.Name} selected, is this the correct modpack?"))
 				{
 					selectedMod = modInfo.Data;
 					return true;

@@ -37,6 +37,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 #pragma warning disable SYSLIB0014 // Type or member is obsolete
 			using WebClient wc = new();
 #pragma warning restore SYSLIB0014 // Type or member is obsolete
+			// TODO: Change into using Spectre.Console for better progress
 			foreach (var asset in downloadItems)
 			{
 				var installDir = Path.Combine(installPath, "libraries", asset.FilePath);
@@ -64,6 +65,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 			await File.WriteAllTextAsync(Path.Combine(installPath, "eula.txt"), "eula=true");
 
 			Console.WriteLine("Downloading mods for modpack");
+			// TODO: Change into using Spectre.Console for better progress
 			foreach (var file in manifest.Files)
 			{
 				var mod = await cfApiClient.GetModFileAsync((int)file.ProjectId, (int)file.FileId);
@@ -127,6 +129,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 #pragma warning disable SYSLIB0014 // Type or member is obsolete
 			using WebClient wc = new();
 #pragma warning restore SYSLIB0014 // Type or member is obsolete
+			// TODO: Change into using Spectre.Console for better progress
 			foreach (var asset in downloadUrls)
 			{
 				var installDir = Path.Combine(installPath, "libraries", asset.FilePath);
