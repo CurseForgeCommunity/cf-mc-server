@@ -8,6 +8,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
 using CurseForge.APIClient;
+using Spectre.Console;
 
 namespace CurseForge.Minecraft.Serverpack.Launcher
 {
@@ -122,7 +123,22 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 				case ForgeModLoaderInfo forge:
 					var versionString = $"{info.NonMapped["minecraftVersion"]}-{info.NonMapped["forgeVersion"]}";
 					var forgeInstallerMaven = new MavenString($"net.minecraftforge.forge:{versionString}");
-					downloadUrls.Add(new(forgeInstallerMaven, installPath, new Uri($"https://maven.minecraftforge.net/net/minecraftforge/forge/{versionString}/forge-{versionString}-installer.jar")));
+
+					var forgeDlUrl = $"https://maven.minecraftforge.net/net/minecraftforge/forge/{versionString}/forge-{versionString}-installer.jar";
+
+					if (!await CheckIfEndpointExists(_client, forgeDlUrl))
+					{
+						versionString = $"{info.NonMapped["minecraftVersion"]}-{info.NonMapped["forgeVersion"]}-{info.NonMapped["minecraftVersion"]}";
+						forgeDlUrl = $"https://maven.minecraftforge.net/net/minecraftforge/forge/{versionString}/forge-{versionString}-installer.jar";
+					}
+
+					if (!await CheckIfEndpointExists(_client, forgeDlUrl))
+					{
+						AnsiConsole.WriteLine($"[red]Could not find an installer for the version of Forge that we need ({info.NonMapped["forgeVersion"]}) for Minecraft {info.NonMapped["minecraftVersion"]}[/]");
+						throw new Exception("Missing Forge installer");
+					}
+
+					downloadUrls.Add(new(forgeInstallerMaven, installPath, new Uri(forgeDlUrl)));
 					break;
 			}
 
@@ -151,6 +167,12 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 			}
 
 			Console.WriteLine("Downloaded all library assets");
+		}
+
+		private static async Task<bool> CheckIfEndpointExists(HttpClient _client, string url)
+		{
+			var result = await _client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+			return result.IsSuccessStatusCode;
 		}
 	}
 }
