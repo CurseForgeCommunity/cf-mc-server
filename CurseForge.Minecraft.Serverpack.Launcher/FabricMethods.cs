@@ -9,7 +9,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 	{
 		private static async Task InstallFabricAsync(string installPath, string minecraftVersion, string loaderVersion, string javaArgs, bool startServer)
 		{
-			var fabricInstaller = Directory.EnumerateFiles(installPath).FirstOrDefault(f => f.Contains("fabric-installer-"));
+			var fabricInstaller = Directory.EnumerateFiles(installPath).FirstOrDefault(f => f.Contains("fabric-installer-") && f.EndsWith(".jar"));
 			if (fabricInstaller == null)
 			{
 				throw new Exception("Couldn't find the installer, bailing out");

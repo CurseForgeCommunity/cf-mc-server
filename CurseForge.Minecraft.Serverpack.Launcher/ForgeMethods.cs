@@ -9,7 +9,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 	{
 		private static async Task InstallForgeAsync(string installPath, string javaArgs, bool startServer)
 		{
-			var forgeInstaller = Directory.EnumerateFiles(installPath).FirstOrDefault(f => f.Contains("forge-") && f.Contains("-installer.jar"));
+			var forgeInstaller = Directory.EnumerateFiles(installPath).FirstOrDefault(f => f.Contains("forge-") && f.Contains("-installer.jar") && f.EndsWith(".jar"));
 			if (forgeInstaller == null)
 			{
 				throw new Exception("Couldn't find the installer, bailing out");
@@ -22,7 +22,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 
 			await RunProcessAsync(installPath, GetJavaExecutable(), false, arguments);
 
-			var forgeLoader = Directory.EnumerateFiles(installPath, "*.jar", SearchOption.AllDirectories).FirstOrDefault(f => f.Contains("forge-") && !f.Contains("-installer.jar"));
+			var forgeLoader = Directory.EnumerateFiles(installPath, "*.jar", SearchOption.AllDirectories).FirstOrDefault(f => f.Contains("forge-") && !f.Contains("-installer.jar") && f.EndsWith(".jar"));
 
 			if (forgeLoader == null)
 			{
