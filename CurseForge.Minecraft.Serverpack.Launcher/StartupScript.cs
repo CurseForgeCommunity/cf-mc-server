@@ -34,10 +34,13 @@ cd {installPath}
 					{
 						StartInfo = new ProcessStartInfo()
 						{
-							FileName = "chmod",
+							FileName = "/bin/chmod",
 							Arguments = $"+x {launchScript}",
 							UseShellExecute = false,
-							CreateNoWindow = true
+							CreateNoWindow = true,
+							RedirectStandardOutput = true,
+							RedirectStandardError = true,
+							RedirectStandardInput = true
 						}
 					};
 
