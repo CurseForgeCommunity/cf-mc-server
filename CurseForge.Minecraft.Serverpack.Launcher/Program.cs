@@ -234,6 +234,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 				{
 					AnsiConsole.Write(new Markup($"To start the server, you can write [orange1 bold]{(OperatingSystem.IsWindows() ? "start-server.bat" : "./start-server.sh")}[/]"));
 				}
+				Console.ReadLine();
 			}
 
 			return 0;
