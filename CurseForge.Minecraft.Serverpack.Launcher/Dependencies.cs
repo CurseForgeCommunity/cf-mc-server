@@ -73,7 +73,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 				var modDlUrl = mod.Data.DownloadUrl;
 				if(string.IsNullOrWhiteSpace(modDlUrl))
 				{
-					modDlUrl = await cfApiClient.GetModFileDownloadUrlAsync((int)file.ProjectId, (int)file.FileId);
+					modDlUrl = await cfApiClient.GetModFileDownloadUrlAsync((int)file.ProjectId, (int)file.FileId).Data;
 				}
 				
 				if(string.IsNullOrWhiteSpace(modDlUrl))
