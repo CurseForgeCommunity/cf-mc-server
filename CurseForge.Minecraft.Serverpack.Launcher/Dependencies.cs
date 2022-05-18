@@ -70,6 +70,18 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 			foreach (var file in manifest.Files)
 			{
 				var mod = await cfApiClient.GetModFileAsync((int)file.ProjectId, (int)file.FileId);
+				var modDlUrl = mod.Data.DownloadUrl;
+				if(string.IsNullOrWhiteSpace(modDlUrl))
+				{
+					modDlUrl = await cfApiClient.GetModFileDownloadUrlAsync((int)file.ProjectId, (int)file.FileId);
+				}
+				
+				if(string.IsNullOrWhiteSpace(modDlUrl))
+				{
+					AnsiConsole.WriteLine($"[red]Could not find a download URL for the mod {mod.Data.DisplayName}, aborting[/]");
+					throw new Exception("Missing download URL for mod");
+				}
+				
 				var modPath = Path.Combine(installPath, "mods", mod.Data.FileName);
 				Directory.CreateDirectory(Path.GetDirectoryName(modPath));
 				if (!File.Exists(modPath))
