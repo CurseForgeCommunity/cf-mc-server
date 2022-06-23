@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[831],{1557:function(e){e.exports=JSON.parse('{"allTagsPath":"/cf-mc-server/blog/tags","name":"minecraft","count":2,"permalink":"/cf-mc-server/blog/tags/minecraft"}')}}]);

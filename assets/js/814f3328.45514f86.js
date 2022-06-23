@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[535],{5641:function(e){e.exports=JSON.parse('{"title":"Recent posts","items":[{"title":"Automation! I love it!","permalink":"/cf-mc-server/blog/automation-i-love-it"},{"title":"We are live!","permalink":"/cf-mc-server/blog/we-are-live"}]}')}}]);

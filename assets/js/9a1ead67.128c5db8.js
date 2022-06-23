@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[488],{2072:function(s){s.exports=JSON.parse('{"allTagsPath":"/cf-mc-server/blog/tags","name":"modpacks","count":1,"permalink":"/cf-mc-server/blog/tags/modpacks"}')}}]);

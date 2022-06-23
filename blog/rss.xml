@@ -4,10 +4,21 @@
         <title>CF-MC-Server Blog</title>
         <link>https://curseforgecommunity.github.io/cf-mc-server/blog</link>
         <description>CF-MC-Server Blog</description>
-        <lastBuildDate>Sat, 16 Apr 2022 00:00:00 GMT</lastBuildDate>
+        <lastBuildDate>Thu, 23 Jun 2022 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <language>en</language>
+        <item>
+            <title><![CDATA[Automation! I love it!]]></title>
+            <link>https://curseforgecommunity.github.io/cf-mc-server/blog/automation-i-love-it</link>
+            <guid>automation-i-love-it</guid>
+            <pubDate>Thu, 23 Jun 2022 00:00:00 GMT</pubDate>
+            <description><![CDATA[Version 1.1.0 is finally released!]]></description>
+            <content:encoded><![CDATA[<p>Version 1.1.0 is finally released!</p><p>In this version we added some simple automation and solutions for unavailable mods (3rd party toggle)</p><p>You can download version 1.1.0 over at <a href="https://github.com/CurseForgeCommunity/cf-mc-server/releases/tag/v1.1.0" target="_blank" rel="noopener noreferrer">GitHub</a>. It's available for Linux, MacOS and Windows (64bit only)</p><h2 class="anchor anchorWithStickyNavbar_mojV" id="features">Features<a class="hash-link" href="#features" title="Direct link to heading">​</a></h2><ul><li>Automatic installer based on file name (or arguments)</li><li>Interactive mode lets you add java arguments now (default <code>-Xms4G -Xmx4G</code>)</li><li>If a mod author has turned off the download possibility for 3rd party clients, we now show a list of mods that need manual attention.</li></ul>]]></content:encoded>
+            <category>minecraft</category>
+            <category>curseforge</category>
+            <category>modpacks</category>
+        </item>
         <item>
             <title><![CDATA[We are live!]]></title>
             <link>https://curseforgecommunity.github.io/cf-mc-server/blog/we-are-live</link>

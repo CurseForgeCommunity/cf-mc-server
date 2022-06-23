@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[341],{9229:function(e){e.exports=JSON.parse('{"allTagsPath":"/cf-mc-server/blog/tags","name":"curseforge","count":1,"permalink":"/cf-mc-server/blog/tags/curseforge"}')}}]);
