@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -34,13 +33,48 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 			var command = SetupCommand();
 			if (args.Length == 0)
 			{
-				await command.InvokeAsync("interactive");
-				Console.ReadKey();
+				var automaticInstall = await CheckProcessNameForAutomaticInstall(command);
+				if (!automaticInstall)
+				{
+					await command.InvokeAsync("interactive");
+					Console.ReadKey();
 
-				return 0;
+					return 0;
+				}
+				else
+				{
+					Console.ReadKey();
+					return 0;
+				}
 			}
 
 			return await command.InvokeAsync(args);
+		}
+
+		private async static Task<bool> CheckProcessNameForAutomaticInstall(RootCommand command)
+		{
+			var currentProcess = Process.GetCurrentProcess().ProcessName;
+
+			Console.WriteLine(currentProcess);
+
+			if (currentProcess.Equals("cf-mc-server", StringComparison.InvariantCultureIgnoreCase))
+			{
+				return false;
+			}
+
+			if (!currentProcess.StartsWith("cf-", StringComparison.InvariantCultureIgnoreCase) || !currentProcess.EndsWith("-server", StringComparison.InvariantCultureIgnoreCase))
+			{
+				return false;
+			}
+
+			var processNameArguments = currentProcess.Split('-');
+
+			var projectId = processNameArguments[2];
+			var fileId = processNameArguments[3];
+
+			await command.InvokeAsync($"interactive true {projectId} {fileId}");
+
+			return true;
 		}
 
 		private static bool TryDirectoryPath(string path)
@@ -60,7 +94,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 			}
 		}
 
-		private static async Task<int> InstallServer(int modId, int fileId, string path, string javaArgs, bool startServer)
+		private static async Task<int> InstallServer(uint modId, uint fileId, string path, string javaArgs, bool startServer)
 		{
 			GetCfApiInformation(out var cfApiKey, out var cfPartnerId, out var cfContactEmail, out var errors);
 
@@ -118,13 +152,13 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 				if (!modInfo.Data.Categories.Any(c => c.ClassId == 4471))
 				{
 					// Not a modpack
-					AnsiConsole.WriteLine("[bold red]Error: Project is not a modpack, not allowed in current version of server launcher[/]");
+					AnsiConsole.MarkupLine("[bold red]Error: Project is not a modpack, not allowed in current version of server launcher[/]");
 					return -1;
 				}
 
 				if (!(modInfo.Data.AllowModDistribution ?? true) || !modInfo.Data.IsAvailable)
 				{
-					AnsiConsole.WriteLine("[bold red]The author of this modpack has not made it available for download through third party tools.[/]");
+					AnsiConsole.MarkupLine("[bold red]The author of this modpack has not made it available for download through third party tools.[/]");
 					return -1;
 				}
 
@@ -134,12 +168,14 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 				var installPath = Path.Combine(path, "installed", modInfo.Data.Slug);
 				var manifestPath = Path.Combine(installPath, "manifest.json");
 
-				if (!File.Exists(dlPath))
+				if (!File.Exists(dlPath) || modFile.Data.FileLength != (ulong)new FileInfo(dlPath).Length)
 				{
-#pragma warning disable SYSLIB0014 // Type or member is obsolete
-					using WebClient wc = new();
-#pragma warning restore SYSLIB0014 // Type or member is obsolete
-					await wc.DownloadFileTaskAsync(modFile.Data.DownloadUrl, dlPath);
+					// Removes the file, if we have a unfinished download (or if the size differs)
+					File.Delete(dlPath);
+
+					using HttpClient wc = new();
+					var dlBytes = await wc.GetByteArrayAsync(modFile.Data.DownloadUrl);
+					await File.WriteAllBytesAsync(dlPath, dlBytes);
 				}
 
 				if (!Directory.Exists(installPath))

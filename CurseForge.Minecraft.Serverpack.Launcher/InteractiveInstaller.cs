@@ -10,11 +10,17 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 {
 	partial class Program
 	{
-		private static async Task<int> InteractiveInstallation()
+		private static async Task<int> InteractiveInstallation(bool? automaticInstaller, uint? projectId, string fileId)
 		{
 			if (!CheckRequiredDependencies())
 			{
 				return -1;
+			}
+
+			if (automaticInstaller.HasValue && automaticInstaller.Value)
+			{
+				Console.WriteLine("Automatic modpack server installer activated");
+				Console.WriteLine("ProjectId: {0}, FileId: {1}", projectId, fileId);
 			}
 
 			Console.WriteLine("Activating interactive mode. Please follow the instructions.");
@@ -51,48 +57,88 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 
 			Console.WriteLine();
 
-			AnsiConsole.Write(new Rule("Search modpack to install"));
-
-			var searchType = AnsiConsole.Prompt(new SelectionPrompt<string>()
-				.Title("Do you want to search by [orange1 bold]project id[/] or [orange1 bold]project name[/]?")
-				.AddChoices(new[]
-				{
-					"Project Id",
-					"Project Name"
-				})
-				.HighlightStyle(new Style(Color.Orange1)));
-
-			Console.WriteLine($"Searching with {searchType}");
-
 			GetCfApiInformation(out var cfApiKey, out var cfPartnerId, out var cfContactEmail, out var errors);
 
 			if (errors.Count > 0)
 			{
-				AnsiConsole.WriteLine("[bold red]Please resolve the errors before continuing.[/]");
+				AnsiConsole.MarkupLine("[bold red]Please resolve the errors before continuing.[/]");
 				return -1;
 			}
 
 			using ApiClient cfApiClient = new(cfApiKey, cfPartnerId, cfContactEmail);
 
-			try
+			if (!projectId.HasValue)
 			{
-				await cfApiClient.GetGamesAsync();
-			}
-			catch
-			{
-				Console.WriteLine("Error: Could not contact the CurseForge API, please check your API key");
-				return -1;
-			}
+				AnsiConsole.Write(new Rule("Search modpack to install"));
 
-			if (searchType == "Project Id")
-			{
-				while (!await HandleProjectIdSearch(cfApiClient))
-				{ }
+				var searchType = AnsiConsole.Prompt(new SelectionPrompt<string>()
+					.Title("Do you want to search by [orange1 bold]project id[/] or [orange1 bold]project name[/]?")
+					.AddChoices(new[]
+					{
+					"Project Id",
+					"Project Name"
+					})
+					.HighlightStyle(new Style(Color.Orange1)));
+
+				Console.WriteLine($"Searching with {searchType}");
+
+				try
+				{
+					await cfApiClient.GetGamesAsync();
+				}
+				catch
+				{
+					Console.WriteLine("Error: Could not contact the CurseForge API, please check your API key");
+					return -1;
+				}
+
+				if (searchType == "Project Id")
+				{
+					while (!await HandleProjectIdSearch(cfApiClient))
+					{ }
+				}
+				else
+				{
+					while (!await HandleProjectSearch(cfApiClient))
+					{ }
+				}
 			}
 			else
 			{
-				while (!await HandleProjectSearch(cfApiClient))
-				{ }
+				var _selectedMod = await cfApiClient.GetModAsync(projectId.Value);
+				if (_selectedMod?.Data == null)
+				{
+					Console.Write($"Error: Project {projectId} does not exist");
+					return -1;
+				}
+
+				selectedMod = _selectedMod.Data;
+
+				if (fileId == "latest")
+				{
+					var versions = await cfApiClient.GetModFilesAsync(selectedMod.Id);
+					var validVersions = versions.Data.Where(v => v.FileStatus == APIClient.Models.Files.FileStatus.Approved);
+
+					var latestVersion = validVersions.OrderByDescending(c => c.FileDate).First();
+
+					selectedVersion = latestVersion;
+				}
+				else
+				{
+					if (!uint.TryParse(fileId, out var _fileId))
+					{
+						Console.WriteLine("Error: Use either \"latest\" or a file id for the version");
+						return -1;
+					}
+					var _selectedFile = await cfApiClient.GetModFileAsync(projectId.Value, _fileId);
+					if (_selectedFile?.Data == null)
+					{
+						Console.Write($"Error: File {fileId} does not exist");
+						return -1;
+					}
+
+					selectedVersion = _selectedFile.Data;
+				}
 			}
 
 			if (selectedMod == null)
@@ -101,8 +147,11 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 				return -1;
 			}
 
-			while (!await HandleProjectVersionSearch(cfApiClient, selectedMod))
-			{ }
+			if (selectedVersion == null)
+			{
+				while (!await HandleProjectVersionSearch(cfApiClient, selectedMod))
+				{ }
+			}
 
 			if (selectedVersion == null)
 			{
@@ -116,13 +165,9 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 				return 1;
 			}
 
-			var javaArgs = string.Empty;
 			var startServer = AnsiConsole.Confirm("Do you want to start the server directly?");
 
-			if (startServer)
-			{
-				javaArgs = AnsiConsole.Ask<string>("Do you want any [orange1 bold]java arguments[/] for the server?");
-			}
+			var javaArgs = AnsiConsole.Ask<string>("Do you want any [orange1 bold]java arguments[/] for the server?", "-Xms4G -Xmx4G");
 
 			await InstallServer(selectedMod.Id, selectedVersion.Id, serverPath, javaArgs, startServer);
 
@@ -178,7 +223,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 
 					if (modResults.Pagination.TotalCount > modResults.Pagination.ResultCount)
 					{
-						int index = modResults.Pagination.Index;
+						uint index = modResults.Pagination.Index;
 						while (modsFound.Count < modResults.Pagination.TotalCount)
 						{
 							ctx.Status($"Fetching more results ({modResults.Pagination.PageSize * (index + 1)} / {modResults.Pagination.TotalCount})");
@@ -216,7 +261,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 		private static async Task<bool> HandleProjectIdSearch(ApiClient cfApiClient)
 		{
 			var projectId = AnsiConsole.Prompt(
-					new TextPrompt<int>(
+					new TextPrompt<uint>(
 						"Enter [orange1 bold]Project Id[/] of the modpack"
 					).ValidationErrorMessage("Please enter a valid [orange1 bold]Project Id[/] for a modpack from CurseForge")
 					.Validate(l => l > 0 ? ValidationResult.Success() : ValidationResult.Error("[orange1 bold]Project Ids[/] cannot be negative"))

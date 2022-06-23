@@ -19,7 +19,7 @@ Example:
 			SetupArguments(command);
 			SetupOptions(command);
 
-			command.Handler = CommandHandler.Create<int, int, string, string, bool>(async (projectid, fileid, serverPath, javaArgs, startServer) => {
+			command.Handler = CommandHandler.Create<uint, uint, string, string, bool>(async (projectid, fileid, serverPath, javaArgs, startServer) => {
 				return await InstallServer(projectid, fileid, serverPath, javaArgs, startServer);
 			});
 
@@ -32,8 +32,29 @@ Example:
 				description: @"The interactive mode lets you search and select what modpack you want to use.
 This will search for modpacks from CurseForge.");
 
-			interactive.Handler = CommandHandler.Create(async () => {
-				return await InteractiveInstallation();
+			interactive.AddArgument(new("automaticInstaller")
+			{
+				ArgumentType = typeof(bool),
+				Arity = ArgumentArity.ZeroOrOne,
+				Description = "Runs the installer even more automatic"
+			});
+
+			interactive.AddArgument(new("projectId")
+			{
+				ArgumentType = typeof(uint),
+				Arity = ArgumentArity.ZeroOrOne,
+				Description = "ProjectId for the modpack"
+			});
+
+			interactive.AddArgument(new("fileId")
+			{
+				ArgumentType = typeof(string),
+				Arity = ArgumentArity.ZeroOrOne,
+				Description = "FileId (or \"latest\") for the modpack"
+			});
+
+			interactive.Handler = CommandHandler.Create<bool?, uint?, string>(async (automaticInstaller, projectId, fileId) => {
+				return await InteractiveInstallation(automaticInstaller, projectId, fileId);
 			});
 
 			command.Add(interactive);
@@ -102,14 +123,14 @@ This will search for modpacks from CurseForge.");
 		{
 			command.AddArgument(new("projectid")
 			{
-				ArgumentType = typeof(int),
+				ArgumentType = typeof(uint),
 				Arity = ArgumentArity.ZeroOrOne,
 				Description = "Sets the project id / modpack id to use",
 			});
 
 			command.AddArgument(new("fileid")
 			{
-				ArgumentType = typeof(int),
+				ArgumentType = typeof(uint),
 				Description = "Sets the file id to use"
 			});
 

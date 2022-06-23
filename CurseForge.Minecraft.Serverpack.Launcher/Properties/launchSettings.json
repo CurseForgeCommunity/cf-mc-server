@@ -7,6 +7,13 @@
     "Specific modpack": {
       "commandName": "Project",
       "commandLineArgs": "477455 3295539 \"c:\\mc-server\""
+    },
+    "No arguments": {
+      "commandName": "Project"
+    },
+    "Automatic installer": {
+      "commandName": "Project",
+      "commandLineArgs": "interactive true 542763 latest"
     }
   }
 }
