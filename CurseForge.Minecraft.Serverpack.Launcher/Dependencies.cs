@@ -8,6 +8,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
 using CurseForge.APIClient;
+using CurseForge.APIClient.Models.Mods;
 using Spectre.Console;
 
 namespace CurseForge.Minecraft.Serverpack.Launcher
@@ -67,27 +68,53 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 
 			Console.WriteLine("Downloading mods for modpack");
 			// TODO: Change into using Spectre.Console for better progress
+
+			var manualInstall = new List<(Mod mod, APIClient.Models.Files.File file)>();
+
 			foreach (var file in manifest.Files)
 			{
-				var mod = await cfApiClient.GetModFileAsync((int)file.ProjectId, (int)file.FileId);
+				var mod = await cfApiClient.GetModFileAsync(file.ProjectId, file.FileId);
 				var modDlUrl = mod.Data.DownloadUrl;
-				if(string.IsNullOrWhiteSpace(modDlUrl))
+				if (string.IsNullOrWhiteSpace(modDlUrl))
 				{
-					modDlUrl = (await cfApiClient.GetModFileDownloadUrlAsync((int)file.ProjectId, (int)file.FileId)).Data;
+					var modData = await cfApiClient.GetModAsync(file.ProjectId);
+					manualInstall.Add((modData.Data, mod.Data));
+					AnsiConsole.MarkupLine($"[red]Could not find a download URL for the mod {modData.Data.Name} ({mod.Data.DisplayName}), needs a manual install[/]");
+					continue;
 				}
-				
-				if(string.IsNullOrWhiteSpace(modDlUrl))
-				{
-					AnsiConsole.WriteLine($"[red]Could not find a download URL for the mod {mod.Data.DisplayName}, aborting[/]");
-					throw new Exception("Missing download URL for mod");
-				}
-				
+
 				var modPath = Path.Combine(installPath, "mods", mod.Data.FileName);
 				Directory.CreateDirectory(Path.GetDirectoryName(modPath));
 				if (!File.Exists(modPath))
 				{
 					Console.WriteLine($"Downloading (mods): {mod.Data.DisplayName} ({mod.Data.FileName})");
 					await wc.DownloadFileTaskAsync(mod.Data.DownloadUrl, modPath);
+				}
+			}
+
+			if (manualInstall.Count > 0)
+			{
+				AnsiConsole.MarkupLine("[red]The mods listed below needs to be downloaded manually, since they don't allow 3rd party clients to download the mods through the API[/]");
+				AnsiConsole.WriteLine($"The mods needs to be downloaded into: {Path.Combine(installPath, "mods")}");
+				Console.WriteLine();
+
+				foreach (var (mod, file) in manualInstall)
+				{
+					Console.WriteLine($"File {file.FileName} needs to be downloaded from: {mod.Links.WebsiteUrl}/files/{file.Id}");
+				}
+
+				Console.WriteLine();
+				Console.WriteLine($"Take a moment to download all these mods into \"{Path.Combine(installPath, "mods")}\" before continuing, then press Enter when you're done.");
+				Console.ReadLine();
+
+				foreach (var (_, file) in manualInstall)
+				{
+					var modPath = Path.Combine(installPath, "mods", file.FileName);
+					if (!File.Exists(modPath))
+					{
+						Console.WriteLine($"File {file.FileName} not yet downloaded, don't blame me if the pack doesn't work as expected.");
+						Console.ReadLine();
+					}
 				}
 			}
 		}
@@ -146,7 +173,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 
 					if (!await CheckIfEndpointExists(_client, forgeDlUrl))
 					{
-						AnsiConsole.WriteLine($"[red]Could not find an installer for the version of Forge that we need ({info.NonMapped["forgeVersion"]}) for Minecraft {info.NonMapped["minecraftVersion"]}[/]");
+						AnsiConsole.MarkupLine($"[red]Could not find an installer for the version of Forge that we need ({info.NonMapped["forgeVersion"]}) for Minecraft {info.NonMapped["minecraftVersion"]}[/]");
 						throw new Exception("Missing Forge installer");
 					}
 
