@@ -46,4 +46,4 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          dotnet publish CurseForge.Minecraft.Serverpack.Launcher/CurseForge.Minecraft.Serverpack.Launcher.csproj --runtime "${{ matrix.target }}" -c Release -o published --self-contained
+          dotnet publish CurseForge.Minecraft.Serverpack.Launcher/cf-mc-server.csproj --runtime "${{ matrix.target }}" -c Release -o published --self-contained
