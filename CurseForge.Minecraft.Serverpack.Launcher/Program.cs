@@ -1,3 +1,6 @@
+using CurseForge.APIClient;
+using CurseForge.APIClient.Models.Mods;
+using Spectre.Console;
 using System;
 using System.CommandLine;
 using System.Diagnostics;
@@ -8,9 +11,6 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
-using CurseForge.APIClient;
-using CurseForge.APIClient.Models.Mods;
-using Spectre.Console;
 
 namespace CurseForge.Minecraft.Serverpack.Launcher
 {

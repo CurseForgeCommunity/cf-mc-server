@@ -1,4 +1,7 @@
-﻿using System;
+﻿using CurseForge.APIClient;
+using CurseForge.APIClient.Models.Mods;
+using Spectre.Console;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,9 +10,6 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
-using CurseForge.APIClient;
-using CurseForge.APIClient.Models.Mods;
-using Spectre.Console;
 
 namespace CurseForge.Minecraft.Serverpack.Launcher
 {
@@ -79,7 +79,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 				{
 					var modData = await cfApiClient.GetModAsync(file.ProjectId);
 					manualInstall.Add((modData.Data, mod.Data));
-					AnsiConsole.MarkupLine($"[red]Could not find a download URL for the mod {modData.Data.Name} ({mod.Data.DisplayName}), needs a manual install[/]");
+					AnsiConsole.MarkupLineInterpolated($"[red]Could not find a download URL for the mod {modData.Data.Name} ({mod.Data.DisplayName}), needs a manual install[/]");
 					continue;
 				}
 
@@ -173,7 +173,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 
 					if (!await CheckIfEndpointExists(_client, forgeDlUrl))
 					{
-						AnsiConsole.MarkupLine($"[red]Could not find an installer for the version of Forge that we need ({info.NonMapped["forgeVersion"]}) for Minecraft {info.NonMapped["minecraftVersion"]}[/]");
+						AnsiConsole.MarkupLineInterpolated($"[red]Could not find an installer for the version of Forge that we need ({info.NonMapped["forgeVersion"]}) for Minecraft {info.NonMapped["minecraftVersion"]}[/]");
 						throw new Exception("Missing Forge installer");
 					}
 
