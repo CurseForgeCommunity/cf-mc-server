@@ -252,10 +252,10 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 				switch (modLoader)
 				{
 					case MinecraftModloader.Fabric:
-						await InstallFabricAsync(installPath, minecraftVersion, modloaderVersion, javaArgs, startServer);
+						await InstallFabricAsync(installPath, minecraftVersion, modloaderVersion, javaArgs);
 						break;
 					case MinecraftModloader.Forge:
-						await InstallForgeAsync(installPath, javaArgs, startServer);
+						await InstallForgeAsync(installPath, minecraftVersion, modloaderVersion, javaArgs);
 						break;
 					case MinecraftModloader.Unknown:
 						Console.WriteLine("Error: Could not determine modloader, bailing out");
@@ -264,7 +264,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 
 				if (startServer)
 				{
-					await RunProcessAsync(installPath, OperatingSystem.IsWindows() ? "start-server.bat" : "./start-server.sh", true);
+					await RunProcessAsync(installPath, Path.Combine(installPath, OperatingSystem.IsWindows() ? "start-server.bat" : "start-server.sh"), true);
 				}
 				else
 				{

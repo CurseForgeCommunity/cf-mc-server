@@ -7,7 +7,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 {
 	partial class Program
 	{
-		private static async Task InstallForgeAsync(string installPath, string javaArgs, bool startServer)
+		private static async Task InstallForgeAsync(string installPath, string minecraftVersion, string modloaderVersion, string javaArgs)
 		{
 			var forgeInstaller = Directory.EnumerateFiles(installPath).FirstOrDefault(f => f.Contains("forge-") && f.Contains("-installer.jar") && f.EndsWith(".jar"));
 			if (forgeInstaller == null)
@@ -20,7 +20,13 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 				"--installServer"
 			};
 
-			await RunProcessAsync(installPath, GetJavaExecutable(), false, arguments);
+			var mcVersion = new Version(minecraftVersion);
+
+			var javaPath = mcVersion.Minor <= 16 ? GetJavaExecutable() : Path.Combine(installPath, "runtime", "bin", GetJavaExecutable());
+
+			await RunProcessAsync(installPath, javaPath, false, arguments);
+
+			var runFile = Path.Combine(installPath, OperatingSystem.IsWindows() ? "run.bat" : "run.sh");
 
 			var forgeLoader = Directory.EnumerateFiles(installPath, "*.jar", SearchOption.AllDirectories).FirstOrDefault(f => f.Contains("forge-") && !f.Contains("-installer.jar") && f.EndsWith(".jar"));
 
@@ -29,9 +35,18 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 				Console.WriteLine("Could not find the loader, please launch server manually");
 			}
 
-			var javaPath = Path.Combine(installPath, "runtime", "bin", GetJavaExecutable());
-
-			CreateLaunchScriptIfMissing(installPath, javaPath, javaArgs, forgeLoader);
+			// This is if Forge started using their new run-files, instead of putting the jar in the folder
+			if (File.Exists(runFile))
+			{
+				var newForgePath = Path.Combine(installPath, "libraries", "net", "minecraftforge", "forge");
+				var forgeVersion = Directory.EnumerateDirectories(newForgePath).FirstOrDefault();
+				var configFile = Path.Combine(forgeVersion, OperatingSystem.IsWindows() ? "win_args.txt" : "unix_args.txt");
+				CreateSpecialLaunchScriptIfMissing(installPath, javaPath, javaArgs, $"@{configFile}");
+			}
+			else
+			{
+				CreateLaunchScriptIfMissing(installPath, javaPath, javaArgs, forgeLoader);
+			}
 		}
 	}
 }

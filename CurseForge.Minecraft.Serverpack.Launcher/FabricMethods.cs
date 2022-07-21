@@ -7,7 +7,7 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 {
 	partial class Program
 	{
-		private static async Task InstallFabricAsync(string installPath, string minecraftVersion, string loaderVersion, string javaArgs, bool startServer)
+		private static async Task InstallFabricAsync(string installPath, string minecraftVersion, string loaderVersion, string javaArgs)
 		{
 			var fabricInstaller = Directory.EnumerateFiles(installPath).FirstOrDefault(f => f.Contains("fabric-installer-") && f.EndsWith(".jar"));
 			if (fabricInstaller == null)
