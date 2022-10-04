@@ -22,9 +22,10 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 
 			var mcVersion = new Version(minecraftVersion);
 
-			var javaPath = mcVersion.Minor <= 16 ? GetJavaExecutable() : Path.Combine(installPath, "runtime", "bin", GetJavaExecutable());
+			var javaInstallPath = mcVersion.Minor <= 16 ? GetJavaExecutable() : Path.Combine(installPath, "runtime", "bin", GetJavaExecutable());
+			var javaPath = Path.Combine(installPath, "runtime", "bin", GetJavaExecutable());
 
-			await RunProcessAsync(installPath, javaPath, false, arguments);
+			await RunProcessAsync(installPath, javaInstallPath, false, arguments);
 
 			var runFile = Path.Combine(installPath, OperatingSystem.IsWindows() ? "run.bat" : "run.sh");
 
