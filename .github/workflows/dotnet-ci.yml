@@ -33,7 +33,7 @@ jobs:
         env:
           CFAPITOKEN: '--FOOLEDYOU--'
         shell: pwsh
-        run: (Get-Content -path "./CurseForge.Minecraft.Serverpack.Launcher/Program.cs") -replace "--REPLACEME--", $env:CFAPITOKEN | Set-Content -Path "./CurseForge.Minecraft.Serverpack.Launcher/Program.cs"
+        run: (Get-Content -path "./cf-mc-server/Program.cs") -replace "--REPLACEME--", $env:CFAPITOKEN | Set-Content -Path "./cf-mc-server/Program.cs"
 
       - name: Setup dotnet
         uses: actions/setup-dotnet@v1
@@ -46,4 +46,4 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          dotnet publish CurseForge.Minecraft.Serverpack.Launcher/cf-mc-server.csproj --runtime "${{ matrix.target }}" -c Release -o published --self-contained
+          dotnet publish cf-mc-server/cf-mc-server.csproj --runtime "${{ matrix.target }}" -c Release -o published --self-contained

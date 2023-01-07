@@ -29,7 +29,7 @@ jobs:
         env:
           CFAPITOKEN: ${{ secrets.SERVERPACKAPI }}
         shell: pwsh
-        run: (Get-Content -path "./CurseForge.Minecraft.Serverpack.Launcher/Program.cs") -replace "--REPLACEME--", $env:CFAPITOKEN | Set-Content -Path "./CurseForge.Minecraft.Serverpack.Launcher/Program.cs"
+        run: (Get-Content -path "./cf-mc-server/Program.cs") -replace "--REPLACEME--", $env:CFAPITOKEN | Set-Content -Path "./cf-mc-server/Program.cs"
 
       - name: Setup dotnet
         uses: actions/setup-dotnet@v1
@@ -43,7 +43,7 @@ jobs:
           tag=$(git describe --tags --abbrev=0)
           release_name="cf-mc-server-$tag-${{ matrix.target }}"
           # Build everything
-          dotnet publish CurseForge.Minecraft.Serverpack.Launcher/cf-mc-server.csproj --runtime "${{ matrix.target }}" -c Release -o "$release_name" --self-contained
+          dotnet publish cf-mc-server/cf-mc-server.csproj --runtime "${{ matrix.target }}" -c Release -o "$release_name" --self-contained
           # Pack files
           if [ "${{ matrix.target }}" == "win-x64" ]; then
             7z a -tzip "${release_name}.zip" "./${release_name}/*"
