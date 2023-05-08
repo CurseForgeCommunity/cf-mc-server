@@ -74,6 +74,13 @@ namespace CurseForge.Minecraft.Serverpack.Launcher
 			foreach (var file in manifest.Files)
 			{
 				var mod = await cfApiClient.GetModFileAsync(file.ProjectId, file.FileId);
+
+				if (mod.Data.GameVersions.Contains("Client") && !mod.Data.GameVersions.Contains("Server"))
+				{
+					AnsiConsole.MarkupLineInterpolated($"[darkorange]The file {mod.Data.DisplayName} is marked as client only, and will not be installed, as it might break the server[/]");
+					continue;
+				}
+
 				var modDlUrl = mod.Data.DownloadUrl;
 				if (string.IsNullOrWhiteSpace(modDlUrl))
 				{
