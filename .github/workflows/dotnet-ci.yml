@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Replace credentials
         env:
@@ -36,7 +36,7 @@ jobs:
         run: (Get-Content -path "./cf-mc-server/Program.cs") -replace "--REPLACEME--", $env:CFAPITOKEN | Set-Content -Path "./cf-mc-server/Program.cs"
 
       - name: Setup dotnet
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 7.0.x
 
