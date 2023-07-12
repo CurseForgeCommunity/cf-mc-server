@@ -37,7 +37,7 @@ You can download the latest version of the CF-MC-Server executable from [GitHub]
 
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/curseforgecommunity/cf-mc-server?color=%23f16436&label=CF-MC-Server%20version&style=for-the-badge)](https://github.com/CurseForgeCommunity/cf-mc-server/releases/latest)
 
-Currently we support Windows and Linux.
+Currently we support Windows, MacOS and Linux.
 
 Unzip this into a directory, where you want it.
 
@@ -46,7 +46,7 @@ Unzip this into a directory, where you want it.
 And then you can simply start the interactive mode like this
 
 <Tabs groupId="operating-system">
-<TabItem value="linux" label="Linux" default>
+<TabItem value="linux" label="Linux / MacOS" default>
 
 First we need to make the executable, well, executable, so run `chmod +x ./cf-mc-server`, otherwise you can't execute anything. :)
 
@@ -80,7 +80,7 @@ And within this interactive setup, you will get the options to:
 If you already know which modpack and which version you want to run, you can run the tool with arguments to tell it what and where to install it.
 
 <Tabs groupId="operating-system">
-<TabItem value="linux" label="Linux" default>
+<TabItem value="linux" label="Linux / MacOS" default>
 
 ```shell
 mc-server@server ~ # ./cf-mc-server 477455 3295539 /home/mc-server/servers
@@ -101,5 +101,4 @@ C:\cf-mc-server\cf-mc-server.exe 477455 3295539 C:\mc-servers
 
 The installer will also create a startup-script, that you can modify to include additional Java arguments, in case you want to increase memory or things like that.
 
-If you are running Linux, you need to make this script executable, so that you can run it afterwards.
-
+If you are running Linux or MacOS, you need to make this script executable, so that you can run it afterwards.
